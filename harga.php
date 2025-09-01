@@ -27,8 +27,10 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Bootstrap -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
 
   <style>
     body {
@@ -52,21 +54,32 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
         right: 0;
         height: 60px;
         background: #198754; /* hijau Bootstrap */
-        color: white;
+        color: black;
         z-index: 9999;
         border-top: 1px solid rgba(255,255,255,0.2);
       }
       .mobile-bottom-nav a {
-        color: white;
-        font-size: 14px;
-        text-align: center;
-        text-decoration: none;
-        flex-grow: 1;
-      }
-      .mobile-bottom-nav i {
-        display: block;
-        font-size: 18px;
-      }
+  color: black;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+  flex-grow: 1;
+}
+
+.mobile-bottom-nav i {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.mobile-bottom-nav .active {
+  font-weight: bold;   /* teks bold */
+  color: white;
+}
+
+.mobile-bottom-nav .active i {
+  font-weight: bold;   /* icon bold */
+}
     }
 
      #video-container {
@@ -153,11 +166,11 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 
 <!-- Bottom Navbar Mobile -->
 <div class="mobile-bottom-nav">
-  <a href="index.php"><i class="fas fa-home"></i><span>Home</span></a>
-  <a href="history.php"><i class="fas fa-history"></i><span>History</span></a>
-  <a href="harga.php"><i class="fas fa-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="fas fa-phone"></i><span>Tarik</span></a>
-  <a href="login.php"><i class="fas fa-user"></i><span>Login</span></a>
+  <a href="index.php"><i class="bi bi-house-door"></i><span>Home</span></a>
+  <a href="history.php" ><i class="bi bi-clock-history"></i><span>History</span></a>
+  <a href="harga.php" class="active"><i class="bi bi-recycle"></i><span>Setor</span></a>
+  <a href="kontak.php"><i class="bi bi-telephone"></i><span>Tarik</span></a>
+  <a href="login.php"><i class="bi bi-person"></i><span>Login</span></a>
 </div>
 <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container-fluid">

@@ -137,28 +137,32 @@ if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('
         right: 0;
         height: 60px;
         background: #198754;
-        color: white;
+        color: black;
         z-index: 9999;
         border-top: 1px solid rgba(255,255,255,0.2);
       }
       .mobile-bottom-nav a {
-        color: white;
-        font-size: 12px;
-        text-align: center;
-        text-decoration: none;
-        flex-grow: 1;
-      }
-      .mobile-bottom-nav i {
-        display: block;
-        font-size: 16px;
-        margin-bottom: 2px;
-      }
-      .mobile-bottom-nav .active {
-        background: rgba(255,255,255,0.2);
-        border-radius: 8px;
-        margin: 5px;
-        padding: 5px;
-      }
+  color: black;
+  font-size: 12px;
+  text-align: center;
+  text-decoration: none;
+  flex-grow: 1;
+}
+
+.mobile-bottom-nav i {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.mobile-bottom-nav .active {
+  font-weight: bold;   /* teks bold */
+  color: white;
+}
+
+.mobile-bottom-nav .active i {
+  font-weight: bold;   /* icon bold */
+}
     }
   </style>
 </head>
@@ -166,7 +170,7 @@ if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('
 
 <!-- Mobile Bottom Navigation -->
 <div class="mobile-bottom-nav">
-  <a href="lp.php"><i class="bi bi-house-door"></i><span>Home</span></a>
+  <a href="index.php"><i class="bi bi-house-door"></i><span>Home</span></a>
   <a href="history.php" class="active"><i class="bi bi-clock-history"></i><span>History</span></a>
   <a href="harga.php"><i class="bi bi-recycle"></i><span>Setor</span></a>
   <a href="kontak.php"><i class="bi bi-telephone"></i><span>Tarik</span></a>
@@ -278,10 +282,6 @@ if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('
             </div>
             <div class="modal-body">
               <div class="row mb-3">
-                <div class="col-4"><strong>ID Transaksi:</strong></div>
-                <div class="col-8">#<?= $row['id'] ?></div>
-              </div>
-              <div class="row mb-3">
                 <div class="col-4"><strong>Deskripsi:</strong></div>
                 <div class="col-8"><?= htmlspecialchars($deskripsi) ?></div>
               </div>
@@ -296,10 +296,6 @@ if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('
               <div class="row mb-3">
                 <div class="col-4"><strong>Tanggal:</strong></div>
                 <div class="col-8"><?= date("d M Y • H:i", strtotime($created_at)) ?></div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-4"><strong>Metode:</strong></div>
-                <div class="col-8"><?= ucfirst($metode) ?></div>
               </div>
               <div class="row mb-3">
                 <div class="col-4"><strong>Status:</strong></div>

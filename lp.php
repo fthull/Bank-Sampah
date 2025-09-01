@@ -41,14 +41,21 @@ include "conn.php";
       }
       .mobile-bottom-nav a {
         color: white;
-        font-size: 14px;
+        font-size: 12px;
         text-align: center;
         text-decoration: none;
         flex-grow: 1;
       }
       .mobile-bottom-nav i {
         display: block;
-        font-size: 18px;
+        font-size: 16px;
+        margin-bottom: 2px;
+      }
+      .mobile-bottom-nav .active {
+        background: rgba(255,255,255,0.2);
+        border-radius: 8px;
+        margin: 5px;
+        padding: 5px;
       }
     }
   </style>
@@ -78,11 +85,11 @@ include "conn.php";
 
 <!-- Bottom Navbar Mobile -->
 <div class="mobile-bottom-nav">
-  <a href="index.php"><i class="fas fa-home"></i><span>Home</span></a>
-  <a href="history.php"><i class="fas fa-history"></i><span>History</span></a>
-  <a href="harga.php"><i class="fas fa-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="fas fa-phone"></i><span>Tarik</span></a>
-  <a href="login.php"><i class="fas fa-user"></i><span>Login</span></a>
+  <a href="index.php"><i class="bi bi-house-door"></i><span>Home</span></a>
+  <a href="history.php" class="active"><i class="bi bi-clock-history"></i><span>History</span></a>
+  <a href="harga.php"><i class="bi bi-recycle"></i><span>Setor</span></a>
+  <a href="kontak.php"><i class="bi bi-telephone"></i><span>Tarik</span></a>
+  <a href="login.php"><i class="bi bi-person"></i><span>Login</span></a>
 </div>
 
 <div class="container mt-4">
