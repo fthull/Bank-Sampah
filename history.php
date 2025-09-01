@@ -1,7 +1,12 @@
 <?php
 include "conn.php";
 session_start();
-// $user_id = $_SESSION['user_id'];
+
+// Cek apakah sudah login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
 // Cek kolom yang tersedia di tabel transaksi
 $check_columns = mysqli_query($conn, "DESCRIBE transaksi");
@@ -10,10 +15,9 @@ while($col = mysqli_fetch_assoc($check_columns)) {
     $columns[] = $col['Field'];
 }
 
-// Tentukan nama kolom yang akan digunakan
+// Tentukan nama kolom untuk jumlah
 $amount_col = 'jumlah';
 if (!in_array('jumlah', $columns)) {
-    // Cari alternatif nama kolom untuk jumlah
     $possible_names = ['amount', 'total', 'nominal', 'nilai', 'harga'];
     foreach($possible_names as $name) {
         if (in_array($name, $columns)) {
@@ -23,17 +27,22 @@ if (!in_array('jumlah', $columns)) {
     }
 }
 
-// Ambil semua transaksi user
-$result = mysqli_query($conn, "SELECT * FROM transaksi_2 WHERE user_id='1' ORDER BY created_at DESC");
+// Ambil data user yang login
+$user_id = $_SESSION['user_id'];
+$query = mysqli_query($conn, "SELECT * FROM users WHERE id='$user_id'");
+$user = mysqli_fetch_assoc($query);
 
-// Hitung total saldo jika kolom yang diperlukan ada
+// Ambil semua transaksi user (pakai tabel transaksi_2 sesuai kodenya)
+$result = mysqli_query($conn, "SELECT * FROM transaksi_2 WHERE user_id='$user_id' ORDER BY created_at DESC");
+
+// Hitung total saldo dari tabel transaksi
 $total_saldo = 0;
 if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('status', $columns)) {
     $saldo_result = mysqli_query($conn, "
       SELECT 
-        SUM(CASE WHEN jenis='setor' THEN $amount_col ELSE 0 END) - 
-        SUM(CASE WHEN jenis='tarik' THEN $amount_col ELSE 0 END) as total_saldo
-      FROM transaksi WHERE user_id='1' AND status='berhasil'
+         total_saldo
+      FROM saldo 
+      WHERE user_id='$user_id' 
     ");
     if ($saldo_result) {
         $saldo_data = mysqli_fetch_assoc($saldo_result);
@@ -160,7 +169,7 @@ if (in_array($amount_col, $columns) && in_array('jenis', $columns) && in_array('
   <a href="lp.php"><i class="bi bi-house-door"></i><span>Home</span></a>
   <a href="history.php" class="active"><i class="bi bi-clock-history"></i><span>History</span></a>
   <a href="harga.php"><i class="bi bi-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="bi bi-telephone"></i><span>Kontak</span></a>
+  <a href="kontak.php"><i class="bi bi-telephone"></i><span>Tarik</span></a>
   <a href="login.php"><i class="bi bi-person"></i><span>Login</span></a>
 </div>
 

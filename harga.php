@@ -144,7 +144,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
         <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
         <li class="nav-item"><a class="nav-link" href="history.php">History</a></li>
         <li class="nav-item"><a class="nav-link" href="harga.php">Setor Sampah</a></li>
-        <li class="nav-item"><a class="nav-link" href="kontak.php">Kontak</a></li>
+        <li class="nav-item"><a class="nav-link" href="kontak.php">Tarik</a></li>
         <li class="nav-item"><a class="btn btn-light btn-sm ms-2" href="login.php">Login</a></li>
       </ul>
     </div>
@@ -156,7 +156,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
   <a href="index.php"><i class="fas fa-home"></i><span>Home</span></a>
   <a href="history.php"><i class="fas fa-history"></i><span>History</span></a>
   <a href="harga.php"><i class="fas fa-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="fas fa-phone"></i><span>Kontak</span></a>
+  <a href="kontak.php"><i class="fas fa-phone"></i><span>Tarik</span></a>
   <a href="login.php"><i class="fas fa-user"></i><span>Login</span></a>
 </div>
 <nav class="navbar navbar-expand-lg navbar-dark bg-success">
@@ -535,11 +535,31 @@ else {
             },
             
             stopDetection: () => {
-                appState.isDetecting = false;
-                UI.startBtn.textContent = "Mulai Deteksi";
-                UI.overlay.textContent = "Status: Deteksi dihentikan";
-                utils.addLog("Deteksi dihentikan oleh pengguna");
-            },
+    appState.isDetecting = false;
+    UI.startBtn.textContent = "Mulai Deteksi";
+    UI.overlay.textContent = "Status: Deteksi dihentikan";
+    utils.addLog("Deteksi dihentikan oleh pengguna");
+
+    // Kirim hasil hitungan ke server
+    fetch("save_transaksi.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
+    })
+    .then(res => res.text())
+    .then(data => {
+        utils.addLog("Transaksi tersimpan ke database: " + data);
+
+        // Reset counter setelah simpan
+        appState.totalBottles = 0;
+        appState.totalLakban = 0;
+        utils.updateUI();
+    })
+    .catch(err => {
+        utils.addLog("Gagal menyimpan transaksi: " + err);
+    });
+},
+
             
             resetCounter: () => {
                 appState.totalBottles = 0;

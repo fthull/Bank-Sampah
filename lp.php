@@ -69,7 +69,7 @@ include "conn.php";
         <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
         <li class="nav-item"><a class="nav-link" href="history.php">History</a></li>
         <li class="nav-item"><a class="nav-link" href="harga.php">Setor Sampah</a></li>
-        <li class="nav-item"><a class="nav-link" href="kontak.php">Kontak</a></li>
+        <li class="nav-item"><a class="nav-link" href="kontak.php">Tarik</a></li>
         <li class="nav-item"><a class="btn btn-light btn-sm ms-2" href="login.php">Login</a></li>
       </ul>
     </div>
@@ -81,7 +81,7 @@ include "conn.php";
   <a href="index.php"><i class="fas fa-home"></i><span>Home</span></a>
   <a href="history.php"><i class="fas fa-history"></i><span>History</span></a>
   <a href="harga.php"><i class="fas fa-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="fas fa-phone"></i><span>Kontak</span></a>
+  <a href="kontak.php"><i class="fas fa-phone"></i><span>Tarik</span></a>
   <a href="login.php"><i class="fas fa-user"></i><span>Login</span></a>
 </div>
 
