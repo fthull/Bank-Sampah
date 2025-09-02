@@ -230,7 +230,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             classIndexKosong: 2,
             classIndexBottle: 0,        // indeks kelas Botol
             classIndexLakban: 1,
-            wemosBase: 'http://172.17.91.201' // <-- GANTI ke IP Wemos Anda
+            wemosBase: 'http://172.17.91.216' // <-- GANTI ke IP Wemos Anda
         };
 
         // ===================== VARIABEL APLIKASI =====================
@@ -242,7 +242,8 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             totalLakban: 0,
             lastDetectionTimeBottle: 0,
             lastDetectionTimeLakban: 0,
-            lastDetectionTimeKosong: 0
+            lastDetectionTimeKosong: 0,
+             stableFramesNeeded: 9 // butuh 3 frame berturut-turut untuk valid
         };
 
         // ===================== INISIALISASI ELEMEN UI =====================
@@ -470,59 +471,84 @@ UI.overlay.textContent =
 const currentTime = Date.now();
 
 // ✅ Logika teratur: hanya satu jalan tiap frame
-if (
-  bottleConfidence > CONFIG.detectionThreshold && 
-  (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
-) {
-    appState.totalBottles++;
-    appState.lastDetectionTime = currentTime;
-    utils.updateUI();
-    utils.addLog(
-        `Botol terdeteksi! Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}% confidence)`
-    );
+// BOTOL
+if (bottleConfidence > CONFIG.detectionThreshold) {
+    appState.stableBottle++;
+    appState.stableLakban = 0;
+    appState.stableKosong = 0;
 
-    utils.updateSaldoServerBottle();
-    await moveRight(); // ke kanan
+    if (
+        appState.stableBottle >= appState.stableFramesNeeded &&
+        (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
+    ) {
+        appState.totalBottles++;
+        appState.lastDetectionTimeBottle = currentTime;
+        utils.updateUI();
+        utils.addLog(
+            `Botol terdeteksi! Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
+        );
+
+        utils.updateSaldoServerBottle();
+        await moveRight();
+        appState.stableBottle = 0; // reset
+    }
 }
 
-else if (
-  lakbanConfidence > CONFIG.detectionThreshold && 
-  (currentTime - appState.lastDetectionTimeLakban) > CONFIG.detectionInterval
-) {
-    appState.totalLakban++;
-    appState.lastDetectionTimeLakban = currentTime;
-    utils.updateUI();
-    utils.addLog(
-        `Lakban terdeteksi! Total: ${appState.totalLakban} (${(lakbanConfidence * 100).toFixed(1)}% confidence)`
-    );
+// LAKBAN
+else if (lakbanConfidence > CONFIG.detectionThreshold) {
+    appState.stableLakban++;
+    appState.stableBottle = 0;
+    appState.stableKosong = 0;
 
-    utils.updateSaldoServerLakban();
-    await moveRight(); // ke kanan
+    if (
+        appState.stableLakban >= appState.stableFramesNeeded &&
+        (currentTime - appState.lastDetectionTimeLakban) > CONFIG.detectionInterval
+    ) {
+        appState.totalLakban++;
+        appState.lastDetectionTimeLakban = currentTime;
+        utils.updateUI();
+        utils.addLog(
+            `Lakban terdeteksi! Total: ${appState.totalLakban} (${(lakbanConfidence * 100).toFixed(1)}%)`
+        );
+
+        utils.updateSaldoServerLakban();
+        await moveRight();
+        appState.stableLakban = 0;
+    }
 }
 
-else if (
-  kosongConfidence > CONFIG.detectionThreshold && 
-  (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
+// KOSONG
+else if     (kosongConfidence >= 0.1 && kosongConfidence <= 1.0
 ) {
-    appState.lastDetectionTimeKosong = currentTime;
-    utils.addLog(`Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
-    await servoSleep(); // diam, jangan gerak
+    appState.stableKosong++;
+    appState.stableBottle = 0;
+    appState.stableLakban = 0;
+
+    if (
+        appState.stableKosong >= appState.stableFramesNeeded &&
+        (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
+    ) {
+        appState.lastDetectionTimeKosong = currentTime;
+        utils.addLog(`Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
+        await servoSleep();
+        appState.stableKosong = 0;
+    }
 }
 
-// kalau tidak ada yang terdeteksi dengan threshold, jangan gerakkan servo
-else if (
-  bottleConfidence < CONFIG.detectionThreshold &&
-  lakbanConfidence < CONFIG.detectionThreshold &&
-  kosongConfidence < CONFIG.detectionThreshold
-) {
-    utils.addLog("Gambar tidak jelas, servo tetap diam");
-    await moveLeft(); // tetap diam
+// GAMBAR TIDAK JELAS
+else {
+    appState.stableBottle = 0;
+    appState.stableLakban = 0;
+    appState.stableKosong = 0;
+
+    utils.addLog("Gambar tidak jelas, servo ke kiri");
+    await moveLeft();
 }
 
 // kalau model mendeteksi kelas lain (misalnya salah prediksi)
-else {
-    await moveLeft(); // ke kiri
-}
+// else {
+//     await moveLeft(); // ke kiri
+// }
 
         
         // Cleanup tensor
