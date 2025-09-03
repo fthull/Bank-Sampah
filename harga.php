@@ -636,24 +636,21 @@ else {
 
     // Kirim hasil hitungan ke server
     fetch("save_transaksi.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
-    })
-    .then(res => res.text())
-    .then(data => {
-        utils.addLog("Transaksi tersimpan ke database: " + data);
-
-        // Reset counter setelah simpan
-        appState.totalBottles = 0;
-        appState.totalLakban = 0;
-        utils.updateUI();
-    })
-    .catch(err => {
-        utils.addLog("Gagal menyimpan transaksi: " + err);
-    });
-},
-
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
+})
+.then(res => res.text())
+.then(data => {
+    if (data === "OK") {
+        utils.addLog("Transaksi tersimpan ke database");
+    } else if (data === "NO_DATA") {
+        utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
+    } else {
+        utils.addLog("Gagal menyimpan transaksi: " + data);
+    }
+});
+            },
 
             
             resetCounter: () => {
