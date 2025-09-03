@@ -466,6 +466,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             UI.overlay.textContent = "Status: Memuat model...";
             utils.addLog("Memulai pemuatan model machine learning");
             
+
             try {
                 appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
                 UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Menghitung'";
@@ -475,6 +476,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
                 UI.overlay.textContent = "Status: Gagal memuat model";
                 utils.addLog(`Error: Gagal memuat model - ${error.message}`);
                 console.error(error);
+
             }
         },
         predict: async () => {

@@ -20,6 +20,12 @@ $harga_lakban = 500;
 // Hitung total uang
 $jumlah_uang = ($total_bottle * $harga_bottle) + ($total_lakban * $harga_lakban);
 
+// 🚨 Cek kalau jumlah uang = 0, jangan simpan transaksi
+if ($jumlah_uang <= 0) {
+    echo "NO_DATA"; // respon khusus, bisa ditangkap di JS
+    exit();
+}
+
 // Buat deskripsi
 $deskripsi = "Setor ";
 if ($total_bottle > 0) {
@@ -42,4 +48,3 @@ if (mysqli_query($conn, $sql)) {
 } else {
     echo "Error: " . mysqli_error($conn);
 }
-?>
