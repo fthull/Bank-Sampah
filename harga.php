@@ -38,53 +38,84 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
       padding-bottom: 60px; /* beri jarak agar konten tidak ketutup bottom navbar */
     }
     /* Bottom Navbar khusus mobile */
-    .mobile-bottom-nav {
-      display: none;
-    }
-    @media (max-width: 768px) {
-      .desktop-navbar {
-        display: none;
-      }
-      .mobile-bottom-nav {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: #198754; /* hijau Bootstrap */
-        color: black;
-        z-index: 9999;
-        border-top: 1px solid rgba(255,255,255,0.2);
-      }
-      .mobile-bottom-nav a {
-  color: black;
-  font-size: 12px;
-  text-align: center;
-  text-decoration: none;
-  flex-grow: 1;
-}
-
-.mobile-bottom-nav i {
-  display: block;
-  font-size: 16px;
-  margin-bottom: 2px;
-}
-
-.mobile-bottom-nav .active {
-  font-weight: bold;   /* teks bold */
-  color: white;
-}
-
-.mobile-bottom-nav .active i {
-  font-weight: bold;   /* icon bold */
-}
-    }
-
+    .desktop-navbar {
+            background: var(--gradient-main);
+            box-shadow: 0 2px 10px var(--shadow-medium);
+        }
+        .desktop-navbar .navbar-brand {
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: var(--white);
+            transition: transform 0.3s ease;
+        }
+        .desktop-navbar .navbar-brand:hover {
+            transform: scale(1.05);
+        }
+        .desktop-navbar .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: color 0.3s, transform 0.3s;
+            position: relative;
+        }
+        .desktop-navbar .nav-link:hover,
+        .desktop-navbar .nav-link.active {
+            color: var(--accent-yellow) !important;
+            transform: translateY(-2px);
+        }
+        .desktop-navbar .nav-link.active::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -5px;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background-color: var(--accent-yellow);
+            border-radius: 2px;
+        }
+        
+        /* Mobile Navbar */
+        .mobile-bottom-nav {
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background: var(--primary-green);
+            color: var(--white);
+            z-index: 9999;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+        }
+        .mobile-bottom-nav a {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            text-align: center;
+            text-decoration: none;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+        .mobile-bottom-nav a:hover {
+            color: var(--accent-yellow);
+            transform: translateY(-3px);
+        }
+        .mobile-bottom-nav a.active {
+            color: var(--accent-yellow);
+            font-weight: 600;
+            transform: translateY(-3px);
+        }
+        .mobile-bottom-nav i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
      #video-container {
->>>>>>> fe93dc7ecb5d1b48b3f5c83fae58e3687c0caed2
             position: relative;
             margin: 20px 0;
         }
@@ -151,33 +182,32 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <body>
 
 <!-- Navbar Desktop -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success desktop-navbar">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Bank Sampah</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-            data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" 
-            aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
-        <li class="nav-item"><a class="nav-link" href="history.php">History</a></li>
-        <li class="nav-item"><a class="nav-link" href="harga.php">Setor Sampah</a></li>
-        <li class="nav-item"><a class="nav-link" href="kontak.php">Tarik</a></li>
-        <li class="nav-item"><a class="btn btn-light btn-sm ms-2" href="login.php">Login</a></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Bank Sampah</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
+                     <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
+                                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
 
-<!-- Bottom Navbar Mobile -->
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 <div class="mobile-bottom-nav">
-  <a href="index.php"><i class="bi bi-house-door"></i><span>Home</span></a>
-  <a href="history.php" ><i class="bi bi-clock-history"></i><span>History</span></a>
-  <a href="harga.php" class="active"><i class="bi bi-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="bi bi-telephone"></i><span>Tarik</span></a>
-  <a href="login.php"><i class="bi bi-person"></i><span>Login</span></a>
+    <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
+    <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
+    <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
+    <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
+        <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
+    <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
 <nav class="navbar navbar-expand-lg navbar-dark bg-success">
     <div class="container-fluid">

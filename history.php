@@ -30,13 +30,13 @@ $limit = 10;
 
 // Ambil semua transaksi user dari tabel `riwayat_transaksi` menggunakan Prepared Statement.
 // Kolom disesuaikan dengan skema database riwayat_transaksi yang Anda berikan.
-$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis_transaksi, jumlah, keterangan, tanggal_transaksi FROM riwayat_transaksi WHERE user_id = ? ORDER BY tanggal_transaksi DESC LIMIT ?");
+$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT ?");
 mysqli_stmt_bind_param($transaksi_stmt, "ii", $user_id, $limit);
 mysqli_stmt_execute($transaksi_stmt);
 $result = mysqli_stmt_get_result($transaksi_stmt);
 
 // Cek kolom yang tersedia di tabel riwayat_transaksi untuk memastikan semuanya ada
-$check_columns = mysqli_query($conn, "DESCRIBE riwayat_transaksi");
+$check_columns = mysqli_query($conn, "DESCRIBE transaksi_2");
 $columns = [];
 if ($check_columns) {
     while ($col = mysqli_fetch_assoc($check_columns)) {
@@ -90,7 +90,6 @@ if ($check_columns) {
             padding: 20px 15px;
         }
         
-        /* Desktop Navbar */
         .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
@@ -129,7 +128,7 @@ if ($check_columns) {
         
         /* Mobile Navbar */
         .mobile-bottom-nav {
-            display: none; /* Hidden by default, shown on mobile */
+            display: none;
             justify-content: space-around;
             align-items: center;
             position: fixed;
@@ -506,7 +505,7 @@ if ($check_columns) {
             <p class="total-amount"><?php echo number_format($total_saldo, 2, ',', '.'); ?></p>
         </div>
 
-<div class="container" style="padding-top: 20px;"> <?php if (in_array('jenis_transaksi', $columns)): ?>
+<div class="container" style="padding-top: 20px;"> <?php if (in_array('jenis', $columns)): ?>
     <ul class="nav nav-pills filter-tabs justify-content-center mb-4" id="filterTabs">
         <li class="nav-item">
             <a class="nav-link active" href="#" data-filter="all">Semua</a>
@@ -526,8 +525,8 @@ if ($check_columns) {
         if ($result && mysqli_num_rows($result) > 0) {
             $has_transactions = true;
             while ($row = mysqli_fetch_assoc($result)):
-                $jenis = $row['jenis_transaksi'] ?? 'setor';
-                $deskripsi = htmlspecialchars($row['keterangan'] ?? 'Transaksi Bank Sampah');
+                $jenis = $row['jenis'] ?? 'setor';
+                $deskripsi = htmlspecialchars($row['deskripsi'] ?? 'Transaksi Bank Sampah');
                 $amount = floatval($row['jumlah'] ?? 0);
         ?>
         <div class="card transaction-item <?= $jenis ?>"
@@ -549,9 +548,9 @@ if ($check_columns) {
                         <h6 class="mb-1 fw-bold"><?= $deskripsi ?></h6>
                         <div class="d-flex align-items-center text-muted small mt-1">
                             <i class="bi bi-calendar3 me-1"></i>
-                            <span class="me-3"><?= date("d M Y", strtotime($row['tanggal_transaksi'])) ?></span>
+                            <span class="me-3"><?= date("d M Y", strtotime($row['created_at'])) ?></span>
                             <i class="bi bi-clock me-1"></i>
-                            <span><?= date("H:i", strtotime($row['tanggal_transaksi'])) ?></span>
+                            <span><?= date("H:i", strtotime($row['created_at'])) ?></span>
                         </div>
                     </div>
                     <div class="flex-shrink-0 text-end">
@@ -592,7 +591,7 @@ if ($check_columns) {
                         </div>
                         <div class="row mb-3">
                             <div class="col-4"><strong>Tanggal:</strong></div>
-                            <div class="col-8"><?= date("d M Y • H:i", strtotime($row['tanggal_transaksi'])) ?></div>
+                            <div class="col-8"><?= date("d M Y • H:i", strtotime($row['created_at'])) ?></div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -617,7 +616,7 @@ if ($check_columns) {
     </div>
 </div>
 
-<?php if (in_array('jenis_transaksi', $columns)): ?>
+<?php if (in_array('jenis', $columns)): ?>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const filterTabs = document.querySelectorAll('#filterTabs .nav-link');
