@@ -100,13 +100,20 @@ if (isset($_GET['status'])) {
         }
 
         /* Gaya Umum */
-        body {
+         body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
-            padding-bottom: 70px;
+            padding-bottom: 70px; /* Space for mobile nav */
             line-height: 1.6;
             overflow-x: hidden;
+        }
+
+        /* Adjust body padding for fixed-top navbar on desktop */
+        @media (min-width: 769px) {
+            body {
+                padding-top: 70px; /* Add padding to prevent content from being hidden by the fixed navbar */
+            }
         }
 
         .container {
@@ -119,6 +126,10 @@ if (isset($_GET['status'])) {
         .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
+            position: fixed; /* Membuat navbar tetap di tempat */
+            top: 0; /* Menempatkan navbar di bagian atas */
+            width: 100%; /* Memastikan navbar penuh lebar */
+            z-index: 1000; /* Menempatkan navbar di atas elemen lain */
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -546,10 +557,9 @@ if (isset($_GET['status'])) {
             <ul class="navbar-nav ms-auto">
                 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
-                     <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
-                                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
-
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
             </ul>
         </div>
@@ -560,7 +570,7 @@ if (isset($_GET['status'])) {
     <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
-        <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
+    <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
     <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
     <div class="header">

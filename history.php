@@ -15,34 +15,39 @@ $user_id = $_SESSION['user_id'];
 // Ambil total saldo dari tabel `saldo` menggunakan Prepared Statement.
 $total_saldo = 0;
 $saldo_stmt = mysqli_prepare($conn, "SELECT total_saldo FROM saldo WHERE user_id = ?");
-mysqli_stmt_bind_param($saldo_stmt, "i", $user_id);
-mysqli_stmt_execute($saldo_stmt);
-$saldo_result = mysqli_stmt_get_result($saldo_stmt);
+if ($saldo_stmt) {
+    mysqli_stmt_bind_param($saldo_stmt, "i", $user_id);
+    mysqli_stmt_execute($saldo_stmt);
+    $saldo_result = mysqli_stmt_get_result($saldo_stmt);
 
-if ($saldo_result && mysqli_num_rows($saldo_result) > 0) {
-    $saldo_data = mysqli_fetch_assoc($saldo_result);
-    $total_saldo = $saldo_data['total_saldo'] ?? 0;
-}
-mysqli_stmt_close($saldo_stmt);
-
-// Tentukan batas jumlah transaksi yang akan ditampilkan
-$limit = 10;
-
-// Ambil semua transaksi user dari tabel `riwayat_transaksi` menggunakan Prepared Statement.
-// Kolom disesuaikan dengan skema database riwayat_transaksi yang Anda berikan.
-$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT ?");
-mysqli_stmt_bind_param($transaksi_stmt, "ii", $user_id, $limit);
-mysqli_stmt_execute($transaksi_stmt);
-$result = mysqli_stmt_get_result($transaksi_stmt);
-
-// Cek kolom yang tersedia di tabel riwayat_transaksi untuk memastikan semuanya ada
-$check_columns = mysqli_query($conn, "DESCRIBE transaksi_2");
-$columns = [];
-if ($check_columns) {
-    while ($col = mysqli_fetch_assoc($check_columns)) {
-        $columns[] = $col['Field'];
-
+    if ($saldo_result && mysqli_num_rows($saldo_result) > 0) {
+        $saldo_data = mysqli_fetch_assoc($saldo_result);
+        $total_saldo = $saldo_data['total_saldo'] ?? 0;
     }
+    mysqli_stmt_close($saldo_stmt);
+}
+
+
+// Ambil semua transaksi user dari tabel `transaksi_2` menggunakan Prepared Statement.
+// Perintah ini mengambil data berdasarkan 'user_id' dan mengurutkan berdasarkan tanggal terbaru.
+// Tambahkan LIMIT 10 untuk membatasi jumlah transaksi yang ditampilkan.
+$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+if ($transaksi_stmt) {
+    mysqli_stmt_bind_param($transaksi_stmt, "i", $user_id);
+    mysqli_stmt_execute($transaksi_stmt);
+    $transaksi_result = mysqli_stmt_get_result($transaksi_stmt);
+    $transactions = mysqli_fetch_all($transaksi_result, MYSQLI_ASSOC);
+    mysqli_stmt_close($transaksi_stmt);
+}
+
+
+// Tutup koneksi
+mysqli_close($conn);
+
+// Fungsi untuk mengonversi tanggal ke format Indonesia
+function format_date($date_string) {
+    $timestamp = strtotime($date_string);
+    return date('d M Y H:i', $timestamp);
 }
 ?>
 
@@ -50,16 +55,14 @@ if ($check_columns) {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>History Transaksi - Bank Sampah</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Riwayat Transaksi - Bank Sampah</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        /* Definisi Variabel Warna */
+        /* Variabel Warna */
         :root {
             --primary-green: #2e8b57;
             --secondary-green: #3cb371;
@@ -83,16 +86,25 @@ if ($check_columns) {
             line-height: 1.6;
             overflow-x: hidden;
         }
-        
+
+        /* Adjust body padding for fixed-top navbar on desktop */
+        @media (min-width: 769px) {
+            body {
+                padding-top: 70px; /* Add padding to prevent content from being hidden by the fixed navbar */
+            }
+        }
+
         .main-container {
             max-width: 960px;
             margin: auto;
             padding: 20px 15px;
         }
-        
+
+        /* Desktop Navbar */
         .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
+            z-index: 1000; /* Ensure it stays on top of other content */
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -125,10 +137,10 @@ if ($check_columns) {
             background-color: var(--accent-yellow);
             border-radius: 2px;
         }
-        
+
         /* Mobile Navbar */
         .mobile-bottom-nav {
-            display: none;
+            display: none; /* Hidden by default, shown on mobile */
             justify-content: space-around;
             align-items: center;
             position: fixed;
@@ -167,12 +179,12 @@ if ($check_columns) {
             font-size: 20px;
             margin-bottom: 5px;
         }
-        
-        /* Header Section */
+
+        /* Bagian Header */
         .header {
             background: var(--gradient-main);
             color: var(--white);
-            padding: 80px 20px 60px; /* Increased padding */
+            padding: 80px 20px 60px;
             text-align: center;
             border-bottom-left-radius: 80px;
             border-bottom-right-radius: 80px;
@@ -180,9 +192,9 @@ if ($check_columns) {
             z-index: 0;
             box-shadow: 0 8px 25px var(--shadow-medium);
             overflow: hidden;
-            margin-bottom: -50px; /* Overlap with content below */
+            margin-bottom: -50px;
         }
-        .header::before { /* Decorative circle */
+        .header::before {
             content: '';
             position: absolute;
             top: -50px;
@@ -193,234 +205,212 @@ if ($check_columns) {
             border-radius: 50%;
             transform: rotate(45deg);
         }
-        
-        /* Custom Keyframes untuk pergerakan yang lebih singkat */
-        @keyframes fadeInDownCustom {
-            from {
-                opacity: 0;
-                transform: translate3d(0, -30px, 0);
-            }
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-        @keyframes fadeInUpCustom {
-            from {
-                opacity: 0;
-                transform: translate3d(0, 30px, 0);
-            }
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-        
         .header h1 {
-            font-size: 3.2rem; /* Larger title */
+            font-size: 3.2rem;
             font-weight: 800;
             margin: 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
-            animation: fadeInDownCustom 1s ease-out; /* Menggunakan animasi kustom */
         }
         .header p {
-            font-size: 1.3rem; /* Larger subtitle */
+            font-size: 1.3rem;
             font-weight: 400;
             margin-top: 15px;
             max-width: 700px;
             margin-left: auto;
             margin-right: auto;
             text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
-            animation: fadeInUpCustom 1s ease-out; /* Menggunakan animasi kustom */
         }
-        
-        /* Main Content Cards */
+
+        /* Konten Utama */
         .main-content {
             position: relative;
             z-index: 1;
             padding: 20px;
         }
-        
-        .saldo-card, .info-card, .form-card {
+
+        .saldo-card {
             background: var(--card-background);
-            border-radius: 25px; /* Slightly larger radius */
+            border-radius: 25px;
             box-shadow: 0 12px 30px var(--shadow-light);
-            padding: 30px;
+            padding: 40px;
             margin-bottom: 25px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .saldo-card:hover, .info-card:hover, .form-card:hover {
-            transform: translateY(-8px); /* More pronounced hover */
-            box-shadow: 0 18px 45px var(--shadow-medium);
-        }
-        
-        /* Saldo Display */
-        .saldo-card {
             text-align: center;
-            padding: 40px; /* Increased padding */
-            background: linear-gradient(145deg, var(--card-background), #f8f8f8); /* Subtle gradient */
+            background: linear-gradient(145deg, var(--card-background), #f8f8f8);
             border: 1px solid rgba(0,0,0,0.05);
         }
+
+        .saldo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 18px 45px var(--shadow-medium);
+        }
+        .saldo-card h2 {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
         .saldo-card .total-amount {
-            font-size: 4.8rem; /* Larger amount */
+            font-size: 4.8rem;
             color: var(--primary-green);
-            font-weight: 800; /* Bolder amount */
+            font-weight: 800;
             margin: 0;
             letter-spacing: -2px;
             position: relative;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            line-height: 1.1; /* Adjust line-height for better alignment */
+            line-height: 1.1;
         }
         .saldo-card .total-amount::before {
-            content: 'Rp';
+           
             font-size: 0.4em;
-            font-weight: 600; /* Bolder 'Rp' */
+            font-weight: 600;
             position: relative;
-            margin-right: 8px; /* More space */
+            margin-right: 8px;
             line-height: 1;
             color: var(--secondary-green);
-            transform: translateY(-8px); /* Adjusted vertical position */
+            transform: translateY(-8px);
         }
-        .saldo-card h2 {
-            font-size: 1.3rem; /* Larger title */
+
+        /* Filter Tabs */
+        .filter-tabs {
+            margin-bottom: 20px;
+            background: #fff;
+            border-radius: 15px;
+            padding: 8px;
+            box-shadow: 0 4px 15px var(--shadow-light);
+        }
+
+        .filter-tabs .nav-link {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
             color: var(--text-light);
-            font-weight: 500;
-            margin-bottom: 15px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+        .filter-tabs .nav-link.active {
+            background-color: var(--primary-green);
+            color: var(--white);
+            box-shadow: 0 4px 10px rgba(46, 139, 87, 0.3);
+        }
+
+        /* Riwayat Transaksi */
+        .transaction-list {
+            max-height: 500px; /* Atur ketinggian maksimum */
+            overflow-y: auto; /* Tambahkan scrollbar vertikal */
+            padding-bottom: 20px; /* Tambahkan ruang di bagian bawah list */
+        }
+
+        .transaction-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .transaction-list::-webkit-scrollbar-track {
+            background: var(--bg-light);
+            border-radius: 10px;
+        }
+
+        .transaction-list::-webkit-scrollbar-thumb {
+            background-color: var(--secondary-green);
+            border-radius: 10px;
+            border: 2px solid var(--bg-light);
+        }
+
         .transaction-item {
-            border-radius: 12px;
-            margin-bottom: 10px;
             background: var(--card-background);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border-left: 5px solid transparent;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px var(--shadow-light);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         .transaction-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px var(--shadow-medium);
         }
-        .transaction-item.setor {
-            border-left-color: #198754;
-        }
-        .transaction-item.tarik {
-            border-left-color: #dc3545;
-        }
-        .transaction-icon {
+
+        .transaction-item .icon-box {
             width: 50px;
             height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            color: white;
-            transition: background-color 0.3s ease;
+            font-size: 1.5rem;
+            color: var(--white);
         }
-        .transaction-icon.setor-icon {
-            background-color: #198754;
-        }
-        .transaction-icon.tarik-icon {
-            background-color: #dc3545;
-        }
-        .transaction-details {
+
+        .transaction-item.setor .icon-box { background-color: var(--secondary-green); }
+        .transaction-item.tarik .icon-box { background-color: #e67e22; }
+
+        .transaction-item .details {
             flex-grow: 1;
         }
-        .transaction-amount {
-            font-size: 1.2rem;
-            font-weight: bold;
+        .transaction-item .details h5 {
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.1rem;
         }
+        .transaction-item .details p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .transaction-item .amount {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-left: auto;
+        }
+        .transaction-item.setor .amount { color: var(--primary-green); }
+        .transaction-item.tarik .amount { color: #e74c3c; }
+
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #6c757d;
-        }
-        .filter-tabs .nav-link {
-            border-radius: 20px;
-            margin: 0 5px;
-            font-weight: 500;
+            padding: 50px 20px;
             color: var(--text-light);
-            transition: all 0.3s ease;
         }
-        .filter-tabs .nav-link.active {
-            background: #198754;
-            color: white;
-            box-shadow: 0 4px 10px rgba(25, 135, 84, 0.3);
+        .empty-state h5 {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 10px;
         }
-        .modal-header {
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
+        .empty-state .btn-success {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            margin-top: 20px;
+            box-shadow: 0 4px 10px rgba(46, 139, 87, 0.3);
         }
-        .modal-content {
-            border-radius: 15px;
-            border: none;
-        }
-        .modal-footer .btn {
-            border-radius: 25px;
-        }
-
-        /* ========== CSS BARU UNTUK SCROLLING DAN BATAS ========== */
-        .transaction-container {
-            max-height: 400px; /* Batas tinggi, sesuaikan sesuai kebutuhan Anda */
-            overflow-y: auto; /* Mengaktifkan scrolling vertikal */
-            padding-right: 15px;
+        .empty-state .btn-success:hover {
+            background-color: #28844e;
         }
 
-        .transaction-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .transaction-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .transaction-container::-webkit-scrollbar-thumb {
-            background: var(--primary-green);
-            border-radius: 10px;
-        }
-
-        /* Tampilan mobile, kurangi tinggi scrollable */
-        @media (max-width: 767.98px) {
-            .transaction-container {
-                max-height: 300px; /* Batas tinggi yang lebih rendah untuk perangkat mobile */
-            }
-        }
-
-        /* ========== MEDIA QUERIES UNTUK RESPONSIVITAS ========== */
-
-        /* Desktop */
-        @media (min-width: 992px) {
-            .desktop-navbar {
-                display: flex;
-            }
-            .mobile-bottom-nav {
-                display: none;
-            }
-        }
-        
-        /* Tablet dan Mobile (di bawah 992px) */
-        @media (max-width: 991.98px) {
+        /* Media Queries untuk Responsif */
+        @media (max-width: 768px) {
             .desktop-navbar {
                 display: none;
             }
             .mobile-bottom-nav {
                 display: flex;
             }
-        }
-
-        /* Layar Kecil (Mobile) */
-        @media (max-width: 767.98px) {
+            body {
+                padding-top: 0;
+            }
             .header {
                 padding: 60px 15px 40px;
-                border-bottom-left-radius: 40px;
-                border-bottom-right-radius: 40px;
+                border-bottom-left-radius: 50px;
+                border-bottom-right-radius: 50px;
+                margin-bottom: -30px;
             }
             .header h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
             .header p {
                 font-size: 1rem;
@@ -429,43 +419,46 @@ if ($check_columns) {
                 padding: 10px;
             }
             .saldo-card {
-                padding: 25px;
+                padding: 30px;
             }
             .saldo-card .total-amount {
-                font-size: 3.5rem;
+                font-size: 3.8rem;
             }
             .saldo-card .total-amount::before {
-                font-size: 0.45em;
-                transform: translateY(-6px);
+                font-size: 0.38em;
+                margin-right: 5px;
+                transform: translateY(-5px);
             }
             .saldo-card h2 {
-                font-size: 1.1rem;
-            }
-            .transaction-item .d-flex {
-                flex-direction: row;
-                align-items: center;
-            }
-            .transaction-icon {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-            .transaction-details h6 {
                 font-size: 1rem;
             }
-            .transaction-amount {
-                font-size: 1.1rem;
+            .transaction-item {
+                padding: 15px;
+            }
+            .transaction-item .icon-box {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+            }
+            .transaction-item .details h5 {
+                font-size: 1rem;
+            }
+            .transaction-item .details p {
+                font-size: 0.85rem;
+            }
+            .transaction-item .amount {
+                font-size: 1rem;
             }
             .filter-tabs .nav-link {
-                font-size: 0.9rem;
                 padding: 8px 15px;
+                font-size: 0.9rem;
             }
         }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Bank Sampah</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -475,27 +468,27 @@ if ($check_columns) {
             <ul class="navbar-nav ms-auto">
                 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
-                     <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
-                                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
-
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
 <div class="mobile-bottom-nav">
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
     <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
-        <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
+    <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
     <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
 
 <div class="header">
     <h1>Riwayat Transaksi</h1>
-    <p>Cek semua aktivitas setor dan penarikan sampahmu di sini, dijamin terstruktur dan aman!</p>
+    <p>Lihat semua aktivitas setor dan penarikan saldo Anda di sini.</p>
 </div>
 
 <div class="main-container">
@@ -505,105 +498,42 @@ if ($check_columns) {
             <p class="total-amount"><?php echo number_format($total_saldo, 2, ',', '.'); ?></p>
         </div>
 
-<div class="container" style="padding-top: 20px;"> <?php if (in_array('jenis', $columns)): ?>
-    <ul class="nav nav-pills filter-tabs justify-content-center mb-4" id="filterTabs">
-        <li class="nav-item">
-            <a class="nav-link active" href="#" data-filter="all">Semua</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-filter="setor">Setor Sampah</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-filter="tarik">Tarik Saldo</a>
-        </li>
-    </ul>
-    <?php endif; ?>
-
-    <div id="transactionList" class="transaction-container">
-        <?php
-        $has_transactions = false;
-        if ($result && mysqli_num_rows($result) > 0) {
-            $has_transactions = true;
-            while ($row = mysqli_fetch_assoc($result)):
-                $jenis = $row['jenis'] ?? 'setor';
-                $deskripsi = htmlspecialchars($row['deskripsi'] ?? 'Transaksi Bank Sampah');
-                $amount = floatval($row['jumlah'] ?? 0);
-        ?>
-        <div class="card transaction-item <?= $jenis ?>"
-            data-jenis="<?= $jenis ?>"
-            data-bs-toggle="modal"
-            data-bs-target="#detailModal<?= $row['id'] ?>">
-            <div class="card-body py-3">
-                <div class="d-flex align-items-center">
-                    <div class="flex-shrink-0 me-3">
-                        <div class="transaction-icon <?= $jenis=='setor' ? 'setor-icon' : 'tarik-icon' ?>">
-                            <?php if($jenis == 'setor'): ?>
-                                <i class="bi bi-arrow-down-circle-fill"></i>
-                            <?php else: ?>
-                                <i class="bi bi-arrow-up-circle-fill"></i>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <div class="flex-grow-1 transaction-details">
-                        <h6 class="mb-1 fw-bold"><?= $deskripsi ?></h6>
-                        <div class="d-flex align-items-center text-muted small mt-1">
-                            <i class="bi bi-calendar3 me-1"></i>
-                            <span class="me-3"><?= date("d M Y", strtotime($row['created_at'])) ?></span>
-                            <i class="bi bi-clock me-1"></i>
-                            <span><?= date("H:i", strtotime($row['created_at'])) ?></span>
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0 text-end">
-                        <h5 class="mb-0 transaction-amount <?= $jenis=='setor' ? 'text-success' : 'text-danger' ?>">
-                            <?= $jenis=='setor' ? '+' : '-' ?>Rp<?= number_format($amount, 0, ',', '.') ?>
-                        </h5>
-                    </div>
-                </div>
-            </div>
+        <?php if (!empty($transactions)) { ?>
+        <div class="filter-tabs nav nav-pills" id="filterTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="all-tab" data-filter="all" href="#all" role="tab" aria-controls="all" aria-selected="true">Semua</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="setor-tab" data-filter="setor" href="#setor" role="tab" aria-controls="setor" aria-selected="false">Setor</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="tarik-tab" data-filter="tarik" href="#tarik" role="tab" aria-controls="tarik" aria-selected="false">Tarik</a>
+            </li>
         </div>
-
-        <div class="modal fade" id="detailModal<?= $row['id'] ?>" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header <?= $jenis=='setor' ? 'bg-success' : 'bg-danger' ?> text-white">
-                        <h5 class="modal-title">
-                            <i class="bi <?= $jenis=='setor' ? 'bi-box-arrow-in-down' : 'bi-box-arrow-up-right' ?> me-2"></i>
-                            Detail <?= ucfirst($jenis) ?>
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="transaction-list">
+            <?php foreach ($transactions as $transaction) {
+                $jenis = $transaction['jenis'];
+                $jumlah = floatval($transaction['jumlah']);
+                $deskripsi = $transaction['deskripsi'];
+                $tanggal = format_date($transaction['created_at']);
+                $icon = ($jenis == 'setor') ? 'fas fa-plus' : 'fas fa-minus';
+                $sign = ($jenis == 'setor') ? '+' : '-';
+                $class_jenis = ($jenis == 'setor') ? 'setor' : 'tarik';
+                ?>
+                <div class="transaction-item <?php echo $class_jenis; ?>" data-jenis="<?php echo $class_jenis; ?>">
+                    <div class="icon-box">
+                        <i class="<?php echo $icon; ?>"></i>
                     </div>
-                    <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-4"><strong>ID Transaksi:</strong></div>
-                            <div class="col-8">#<?= $row['id'] ?></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4"><strong>Deskripsi:</strong></div>
-                            <div class="col-8"><?= $deskripsi ?></div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4"><strong>Jumlah:</strong></div>
-                            <div class="col-8">
-                                <span class="<?= $jenis=='setor' ? 'text-success' : 'text-danger' ?>">
-                                    <?= $jenis=='setor' ? '+' : '-' ?>Rp<?= number_format($amount, 0, ',', '.') ?>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4"><strong>Tanggal:</strong></div>
-                            <div class="col-8"><?= date("d M Y • H:i", strtotime($row['created_at'])) ?></div>
-                        </div>
+                    <div class="details">
+                        <h5><?php echo ucfirst($jenis); ?> Saldo</h5>
+                        <p><?php echo $deskripsi; ?></p>
+                        <p><small class="text-muted"><?php echo $tanggal; ?></small></p>
                     </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x-circle me-1"></i>Tutup
-                        </button>
-                    </div>
+                   
                 </div>
-            </div>
+            <?php } ?>
         </div>
-        <?php endwhile;
-        } else { ?>
+        <?php } else { ?>
         <div class="empty-state">
             <i class="bi bi-inbox fs-1 mb-3 d-block"></i>
             <h5>Belum Ada Transaksi</h5>
@@ -616,7 +546,7 @@ if ($check_columns) {
     </div>
 </div>
 
-<?php if (in_array('jenis', $columns)): ?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const filterTabs = document.querySelectorAll('#filterTabs .nav-link');
@@ -630,7 +560,7 @@ if ($check_columns) {
                 const filter = this.dataset.filter;
                 transactionItems.forEach(item => {
                     if (filter === 'all' || item.dataset.jenis === filter) {
-                        item.style.display = 'block';
+                        item.style.display = 'flex';
                     } else {
                         item.style.display = 'none';
                     }
@@ -639,8 +569,6 @@ if ($check_columns) {
         });
     });
 </script>
-<?php endif; ?>
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 
 </body>
 </html>

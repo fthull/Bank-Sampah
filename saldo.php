@@ -1,115 +1,94 @@
 <?php
 session_start();
 
-// Periksa apakah pengguna sudah login, jika tidak, arahkan ke halaman login
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
-// Panggil file konfigurasi database yang terpisah
-// File ini sudah membuat objek koneksi $conn
 require_once 'conn.php';
 
 $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 
-// Ambil data saldo saat ini dari tabel `saldo`
-// BARIS INI TELAH DIHAPUS:
-// $conn = new mysqli($servername, $db_username, $db_password, $dbname);
-if ($conn->connect_error) {
-    // Tangani kegagalan koneksi database
-    header("Location: saldo.php?status=error_db");
-    exit();
-}
-
+// Ambil total saldo saat ini dari tabel saldo
+$total_saldo = 0.00;
 $sql_saldo = "SELECT total_saldo FROM saldo WHERE user_id = ?";
 $stmt_saldo = $conn->prepare($sql_saldo);
 $stmt_saldo->bind_param("i", $user_id);
 $stmt_saldo->execute();
 $result_saldo = $stmt_saldo->get_result();
 
-$total_saldo = 0.00;
 if ($result_saldo->num_rows > 0) {
     $row_saldo = $result_saldo->fetch_assoc();
-    $total_saldo = $row_saldo['total_saldo'];
+    $total_saldo = $row_saldo['total_saldo'] ?? 0.00;
 }
 $stmt_saldo->close();
 
-// Proses form jika ada data yang dikirim menggunakan metode POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $jumlah_tarik = floatval($_POST['jumlah_tarik']);
     $bank_tujuan = $_POST['bank_tujuan'];
     $nomor_rekening = $_POST['nomor_rekening'];
     $nama_pemilik = $_POST['nama_pemilik'];
 
-    // Lakukan validasi minimal penarikan
     if ($jumlah_tarik >= 1000) {
-        // Ambil kembali saldo terbaru untuk memastikan tidak ada perubahan saat form diproses
+        // Ambil kembali saldo terbaru dari tabel saldo untuk memastikan tidak ada perubahan saat form diproses
         $stmt_check_saldo = $conn->prepare("SELECT total_saldo FROM saldo WHERE user_id = ?");
         $stmt_check_saldo->bind_param("i", $user_id);
         $stmt_check_saldo->execute();
         $result_check_saldo = $stmt_check_saldo->get_result();
         $row_check_saldo = $result_check_saldo->fetch_assoc();
-        $current_balance = $row_check_saldo['total_saldo'];
+        $current_balance = $row_check_saldo['total_saldo'] ?? 0.00;
         $stmt_check_saldo->close();
 
-        // Periksa apakah saldo mencukupi
         if ($current_balance >= $jumlah_tarik) {
-            // Saldo mencukupi, mulai transaksi database
+            // Saldo mencukupi, masukkan transaksi penarikan dan update saldo
             $conn->begin_transaction();
             try {
-                // 1. Masukkan transaksi penarikan ke tabel `riwayat_transaksi`
-                $stmt_insert = $conn->prepare("INSERT INTO riwayat_transaksi (user_id, jenis_transaksi, jumlah, keterangan) VALUES (?, ?, ?, ?)");
+                // 1. Masukkan transaksi penarikan ke tabel transaksi_2
+                $stmt_insert_transaksi = $conn->prepare("INSERT INTO transaksi_2 (user_id, jenis, jumlah, deskripsi) VALUES (?, ?, ?, ?)");
                 
                 $jenis = "tarik";
-                $keterangan = "Penarikan sebesar Rp " . number_format($jumlah_tarik, 2, ',', '.') . " ke E-wallet: " . $bank_tujuan . ", No. Telp: " . $nomor_rekening;
+                $deskripsi = "Penarikan sebesar Rp " . number_format($jumlah_tarik, 2, ',', '.') . " ke E-wallet: " . $bank_tujuan . ", No. Telp: " . $nomor_rekening;
 
-                $stmt_insert->bind_param("isds", $user_id, $jenis, $jumlah_tarik, $keterangan);
-                $stmt_insert->execute();
+                $stmt_insert_transaksi->bind_param("isds", $user_id, $jenis, $jumlah_tarik, $deskripsi);
+                $stmt_insert_transaksi->execute();
 
-                if ($stmt_insert->affected_rows > 0) {
-                    // 2. Kurangi saldo dari tabel `saldo`
+                if ($stmt_insert_transaksi->affected_rows > 0) {
+                    // 2. Update saldo di tabel saldo
                     $stmt_update_saldo = $conn->prepare("UPDATE saldo SET total_saldo = total_saldo - ? WHERE user_id = ?");
                     $stmt_update_saldo->bind_param("di", $jumlah_tarik, $user_id);
                     $stmt_update_saldo->execute();
 
                     if ($stmt_update_saldo->affected_rows > 0) {
-                        // Jika kedua operasi berhasil, lakukan commit dan redirect
                         $conn->commit();
                         header("Location: saldo.php?status=success&amount=" . urlencode($jumlah_tarik));
                         exit();
                     } else {
-                        // Jika update saldo gagal, batalkan transaksi dan redirect
                         $conn->rollback();
-                        header("Location: saldo.php?status=error&message=" . urlencode("Terjadi kesalahan saat memperbarui saldo Anda. Silakan coba lagi."));
+                        header("Location: saldo.php?status=error&message=" . urlencode("Terjadi kesalahan saat memperbarui saldo. Silakan coba lagi."));
                         exit();
                     }
                 } else {
-                    // Jika insert transaksi gagal, batalkan transaksi dan redirect
                     $conn->rollback();
                     header("Location: saldo.php?status=error&message=" . urlencode("Terjadi kesalahan saat menyimpan transaksi. Silakan coba lagi."));
                     exit();
                 }
             } catch (Exception $e) {
-                // Tangani kesalahan tak terduga
                 $conn->rollback();
                 header("Location: saldo.php?status=error&message=" . urlencode("Terjadi kesalahan pada server: " . $e->getMessage()));
                 exit();
             }
         } else {
-            // Saldo tidak mencukupi, redirect dengan pesan error
             header("Location: saldo.php?status=error&message=" . urlencode("Maaf, saldo Anda tidak mencukupi untuk melakukan penarikan ini."));
             exit();
         }
     } else {
-        // Jumlah penarikan tidak valid, redirect dengan pesan error
         header("Location: saldo.php?status=error&message=" . urlencode("Jumlah penarikan harus lebih dari Rp 1.000."));
         exit();
     }
 }
 
-// Cek apakah ada pesan dari redirect (GET parameter)
 $message = "";
 $message_type = "";
 $message_amount = 0;
@@ -164,6 +143,13 @@ $conn->close();
             overflow-x: hidden;
         }
 
+        /* Adjust body padding for fixed-top navbar on desktop */
+        @media (min-width: 769px) {
+            body {
+                padding-top: 70px; /* Add padding to prevent content from being hidden by the fixed navbar */
+            }
+        }
+
         .main-container {
             max-width: 960px;
             margin: auto;
@@ -174,6 +160,7 @@ $conn->close();
         .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
+            z-index: 1000; /* Ensure it stays on top of other content */
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -333,7 +320,7 @@ $conn->close();
             line-height: 1.1; /* Adjust line-height for better alignment */
         }
         .saldo-card .total-amount::before {
-            content: 'Rp';
+           
             font-size: 0.4em;
             font-weight: 600; /* Bolder 'Rp' */
             position: relative;
@@ -580,7 +567,7 @@ $conn->close();
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Bank Sampah</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -590,23 +577,24 @@ $conn->close();
             <ul class="navbar-nav ms-auto">
                 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
-                     <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
-                                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
-
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
 <div class="mobile-bottom-nav">
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
     <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
-        <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
+    <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
     <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
+
 <div class="header">
     <h1>Tarik Saldo Anda</h1>
     <p>Cairkan hasil jerih payah Anda dalam menjaga lingkungan di Bank Sampah Banguntapan. Mudah, cepat, dan aman!</p>

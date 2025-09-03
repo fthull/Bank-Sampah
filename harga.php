@@ -22,25 +22,57 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <title>Bank Sampah - Setor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Bank Sampah - Setor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary-green: #2e8b57; /* Hijau laut sedang */
+            --secondary-green: #3cb371; /* Hijau musim semi sedang */
+            --accent-yellow: #ffc107; /* Kuning cerah untuk aksen */
+            --bg-light: #f3fff8; /* Latar belakang hijau sangat muda */
+            --card-background: #ffffff; /* Putih */
+            --text-dark: #333333; /* Teks gelap */
+            --text-light: #777777; /* Teks abu-abu */
+            --white: #ffffff;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --gradient-main: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+        }
 
-  <!-- Bootstrap -->
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
+        /* Gaya Umum */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding-top: 60px; /* Ditambahkan untuk mengimbangi navbar yang fixed */
+            padding-bottom: 70px; /* Space for mobile nav */
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-  <style>
-    body {
-      padding-bottom: 60px; /* beri jarak agar konten tidak ketutup bottom navbar */
-    }
-    /* Bottom Navbar khusus mobile */
-    .desktop-navbar {
+        .main-container {
+            max-width: 960px;
+            margin: auto;
+            padding: 20px 15px;
+        }
+
+        /* Desktop Navbar */
+        .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
+            position: fixed; /* Membuat navbar tetap di tempat */
+            top: 0; /* Menempatkan navbar di bagian atas */
+            width: 100%; /* Memastikan navbar penuh lebar */
+            z-index: 1000; /* Menempatkan navbar di atas elemen lain */
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -76,7 +108,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
         
         /* Mobile Navbar */
         .mobile-bottom-nav {
-            display: none;
+            display: none; /* Hidden by default, shown on mobile */
             justify-content: space-around;
             align-items: center;
             position: fixed;
@@ -115,7 +147,8 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             font-size: 20px;
             margin-bottom: 5px;
         }
-     #video-container {
+
+        #video-container {
             position: relative;
             margin: 20px 0;
         }
@@ -124,9 +157,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             border: 2px solid #ccc;
             border-radius: 8px;
             width: 100%;
-
             height: 100%;
-
         }
         #overlay {
             position: absolute;
@@ -139,13 +170,11 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             font-size: 14px;
         }
 
-        #count-display-bottle ,
-        #count-display-lakban{
+        #count-display-bottle, #count-display-lakban {
             font-size: 18px;
             font-weight: bold;
             margin: 15px 0;
             padding: 5px;
-
             background-color: #e0e0ff;
             border-radius: 5px;
         }
@@ -176,12 +205,17 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             overflow-y: auto;
             font-family: monospace;
         }
-  </style>
+
+        @media (max-width: 768px) {
+            .desktop-navbar { display: none; }
+            .mobile-bottom-nav { display: flex; }
+            body { padding-top: 0; }
+        }
+    </style>
 </head>
 
 <body>
 
-<!-- Navbar Desktop -->
 <nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Bank Sampah</a>
@@ -192,503 +226,392 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             <ul class="navbar-nav ms-auto">
                 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
-                     <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
-                                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
-
                 <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
             </ul>
         </div>
     </div>
 </nav>
+
 <div class="mobile-bottom-nav">
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
     <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
-        <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
+    <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
     <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
-<nav class="navbar navbar-expand-lg navbar-dark bg-success">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="#">Setor Sampah</a>
 
-      <div class="d-flex">
-        <span class="navbar-text text-white me-3">
-          Halo, <?= $user['nama']; ?>
-        </span>
-        <a href="logout.php" class="btn btn-danger btn-sm">Logout</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container mt-4">
+<div class="container mt-4 main-container">
     <div class="row">
-      <!-- Info Saldo -->
-      <div class="col-md-4">
-  <div class="card shadow-sm border-success">
-    <div class="card-body">
-      <h5 class="card-title text-success">Saldo Anda</h5>
-<h3 id="saldo-text">
-  <?= "Rp " . number_format($saldo, 2, ",", "."); ?>
-</h3>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">Saldo Anda</h5>
+                    <h3 id="saldo-text">
+                        <?= "Rp " . number_format($saldo, 2, ",", "."); ?>
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Setor Sampah</h5>
+                </div>
+                <div class="card-body">
+                    <div id="video-container">
+                        <video id="video" width="640" height="480" autoplay muted></video>
+                        <div id="overlay">Status: Menunggu inisialisasi...</div>
+                    </div>
+                    <div class="d-flex justify-content-around mt-3">
+                        <div id="count-display-bottle" class="p-2 border rounded text-center me-2 flex-grow-1">Total Botol: 0</div>
+                        <div id="count-display-lakban" class="p-2 border rounded text-center flex-grow-1">Total Lakban: 0</div>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <button id="startBtn" class="btn btn-primary me-2">Mulai Menghitung</button>
+                        <button id="resetBtn" class="btn btn-warning">Reset Hitungan</button>
+                    </div>
+                    <h6 class="mt-4">Log Deteksi</h6>
+                    <div id="log" class="border rounded p-2 bg-light">
+                        <p>Log deteksi akan muncul di sini...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<div>
-    <div id="video-container">
-        <video id="video" width="640" height="480" autoplay muted></video>
-        <div id="overlay">Status: Menunggu inisialisasi...</div>
-    </div>
-    
-
-
-        <div id="count-display-bottle">Total Botol: 0</div>
-        <div id="count-display-lakban">Total Lakban: 0</div>
-    <div>
-        <button id="startBtn">Mulai Menghitung</button>
-
-        <button id="resetBtn">Reset Hitungan</button>
-    </div>
-    
-    <div id="log">
-        <p>Log deteksi akan muncul di sini...</p>
-    </div>
-</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-        // ===================== KONFIGURASI =====================
-        const CONFIG = {
-            modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/SF0K0U939/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/GKEIbonIo/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-            detectionThreshold: 0.8,    // Minimal confidence 80%
-            detectionInterval: 4000,    // Interval minimal deteksi (2 detik)
-            classIndexKosong: 2,
-            classIndexBottle: 0,        // indeks kelas Botol
-            classIndexLakban: 1,
-            wemosBase: 'http://172.17.91.216' // <-- GANTI ke IP Wemos Anda
+    // ===================== KONFIGURASI =====================
+    const CONFIG = {
+        modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
+        detectionThreshold: 0.8,
+        detectionInterval: 4000,
+        classIndexKosong: 2,
+        classIndexBottle: 0,
+        classIndexLakban: 1,
+        wemosBase: 'http://172.17.91.216'
+    };
 
-        };
+    // ===================== VARIABEL APLIKASI =====================
+    let appState = {
+        model: null,
+        video: null,
+        isDetecting: false,
+        totalBottles: 0,
+        totalLakban: 0,
+        lastDetectionTimeBottle: 0,
+        lastDetectionTimeLakban: 0,
+        lastDetectionTimeKosong: 0,
+        stableFramesNeeded: 9,
+        stableBottle: 0,
+        stableLakban: 0,
+        stableKosong: 0,
+    };
 
-        // ===================== VARIABEL APLIKASI =====================
-        let appState = {
-            model: null,
-            video: null,
-            isDetecting: false,
-            totalBottles: 0,
+    // ===================== INISIALISASI ELEMEN UI =====================
+    const UI = {
+        startBtn: document.getElementById('startBtn'),
+        resetBtn: document.getElementById('resetBtn'),
+        countDisplayBottle: document.getElementById('count-display-bottle'),
+        countDisplayLakban: document.getElementById('count-display-lakban'),
+        overlay: document.getElementById('overlay'),
+        logElement: document.getElementById('log'),
+        video: document.getElementById('video')
+    };
 
-            totalLakban: 0,
-            lastDetectionTimeBottle: 0,
-            lastDetectionTimeLakban: 0,
-            lastDetectionTimeKosong: 0,
-             stableFramesNeeded: 9 // butuh 3 frame berturut-turut untuk valid
+    // ===================== FUNGSI UTILITAS =====================
+    const utils = {
+        addLog: (message) => {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const logEntry = document.createElement('p');
+            logEntry.textContent = `[${timeString}] ${message}`;
+            UI.logElement.insertBefore(logEntry, UI.logElement.firstChild);
 
-        };
-
-        // ===================== INISIALISASI ELEMEN UI =====================
-        const UI = {
-            startBtn: document.getElementById('startBtn'),
-            resetBtn: document.getElementById('resetBtn'),
-
-            countDisplayBottle: document.getElementById('count-display-bottle'),
-            countDisplayLakban: document.getElementById('count-display-lakban'),
-
-            overlay: document.getElementById('overlay'),
-            logElement: document.getElementById('log'),
-            video: document.getElementById('video')
-        };
-
-        // ===================== FUNGSI UTILITAS =====================
-
-       const utils = {
-addLog: (message) => {
-
-        const now = new Date();
-        const timeString = now.toLocaleTimeString();
-        const logEntry = document.createElement('p');
-        logEntry.textContent = `[${timeString}] ${message}`;
-        UI.logElement.insertBefore(logEntry, UI.logElement.firstChild);
-
-        if (UI.logElement.children.length > 20) {
-            UI.logElement.removeChild(UI.logElement.lastChild);
-        }
-    },
-
-
-
-    updateUI: () => {
-        if (UI.countDisplayBottle) {
-            UI.countDisplayBottle.textContent = `Total Botol: ${appState.totalBottles}`;
-        }
-        if (UI.countDisplayLakban) {
-            UI.countDisplayLakban.textContent = `Total Lakban: ${appState.totalLakban}`;
-        }
-    },
-
-    updateSaldoServerBottle: () => {
-
-        const tambahSaldo = 200;
-
-        fetch("update_saldo.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `total_saldo=${tambahSaldo}`
-        })
-        .then(res => res.text())
-        .then(data => {
-            utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
-
-            // Ambil saldo terbaru dari server
-
-            return fetch("get_saldo.php");
-        })
-        .then(r => r.json())
-        .then(json => {
-            let saldoFormatted = new Intl.NumberFormat("id-ID", { 
-                style: "currency", 
-                currency: "IDR" 
-            }).format(json.saldo);
-
-            document.getElementById("saldo-text").textContent = saldoFormatted;
-
-        })
-        .catch(err => {
-            utils.addLog("Error update saldo: " + err);
-        });
-
-    },
-
-    updateSaldoServerLakban: () => {
-        const tambahSaldo = 500;
-
-        fetch("update_saldo.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `total_saldo=${tambahSaldo}`
-        })
-        .then(res => res.text())
-        .then(data => {
-            utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
-
-            // Ambil saldo terbaru dari server
-            return fetch("get_saldo.php");
-        })
-        .then(r => r.json())
-        .then(json => {
-            let saldoFormatted = new Intl.NumberFormat("id-ID", { 
-                style: "currency", 
-                currency: "IDR" 
-            }).format(json.saldo);
-
-            document.getElementById("saldo-text").textContent = saldoFormatted;
-        })
-        .catch(err => {
-            utils.addLog("Error update saldo: " + err);
-        });
-    },
-};
-
-         // ===================== FUNGSI SERVO =====================
-        //  const wemos = {
-        // servo: async (pos) => {
-        //     const url = `${CONFIG.wemosBase}/servo?pos=${pos}`;
-        //     await fetch(url, { mode: 'cors' });
-        //     }
-        // };
-
-        // // helper kecil untuk jeda
-        // const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const wemos = {
-    servo: async (pos) => {
-        try {
-            const url = `${CONFIG.wemosBase}/servo?pos=${pos}`;
-            await fetch(url, { mode: 'cors' });
-            console.log(`Servo digerakkan ke posisi ${pos}°`);
-        } catch (e) {
-            console.error("Gagal mengirim perintah ke Wemos:", e);
-        }
-    }
-};
-
-// helper kecil untuk jeda
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-
-// === Kontrol Servo ===
-
-(async () => {
-    console.log("Inisialisasi: Servo default 90° (diam)");
-    await wemos.servo(90); // default = diam
-})();
-
-async function moveRight() {
-    console.log("Servo → Kanan (180°)");
-    await wemos.servo(180);
-    await sleep(2000); // jeda 1 detik
-    console.log("Servo kembali ke posisi default (90°)");
-    await wemos.servo(90);
-}
-
-
-async function moveLeft() {
-    console.log("Servo → Kiri (0°)");
-    await wemos.servo(0); // kiri = 0 derajat
-
-    // jeda 1 detik
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    console.log("Servo kembali ke posisi default (90°)");
-    await wemos.servo(90); // kembali ke default
-}
-
-
-async function servoSleep() {
-    console.log("Servo → Diam (Tengah)");
-    await wemos.servo(90); // misalnya diam = tengah 90 derajat
-}
-
-
-
-        // ===================== FUNGSI KAMERA =====================
-        const camera = {
-            setup: async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    UI.video.srcObject = stream;
-                    
-                    return new Promise((resolve) => {
-                        UI.video.onloadedmetadata = () => {
-                            resolve(UI.video);
-                        };
-                    });
-                } catch (error) {
-                    UI.overlay.textContent = "Status: Gagal mengakses kamera";
-                    utils.addLog(`Error: Gagal mengakses kamera - ${error.message}`);
-                    console.error(error);
-                    return null;
-                }
+            if (UI.logElement.children.length > 20) {
+                UI.logElement.removeChild(UI.logElement.lastChild);
             }
-        };
+        },
+        updateUI: () => {
+            if (UI.countDisplayBottle) {
+                UI.countDisplayBottle.textContent = `Total Botol: ${appState.totalBottles}`;
+            }
+            if (UI.countDisplayLakban) {
+                UI.countDisplayLakban.textContent = `Total Lakban: ${appState.totalLakban}`;
+            }
+        },
+        updateSaldoServerBottle: () => {
+            const tambahSaldo = 200;
 
-        // ===================== FUNGSI MODEL =====================
-        const model = {
-            load: async () => {
-                UI.overlay.textContent = "Status: Memuat model...";
-                utils.addLog("Memulai pemuatan model machine learning");
-                
-                try {
-                    appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
-                    UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Deteksi'";
-                    utils.addLog("Model berhasil dimuat");
-                    UI.startBtn.disabled = false;
-                } catch (error) {
-                    UI.overlay.textContent = "Status: Gagal memuat model";
-                    utils.addLog(`Error: Gagal memuat model - ${error.message}`);
-                    console.error(error);
-                }
-            },
-            
-            predict: async () => {
-    if (!appState.isDetecting) return;
+            fetch("update_saldo.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `total_saldo=${tambahSaldo}`
+            })
+            .then(res => res.text())
+            .then(data => {
+                utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
+                return fetch("get_saldo.php");
+            })
+            .then(r => r.json())
+            .then(json => {
+                let saldoFormatted = new Intl.NumberFormat("id-ID", { 
+                    style: "currency", 
+                    currency: "IDR" 
+                }).format(json.saldo);
+                document.getElementById("saldo-text").textContent = saldoFormatted;
+            })
+            .catch(err => {
+                utils.addLog("Error update saldo: " + err);
+            });
+        },
+        updateSaldoServerLakban: () => {
+            const tambahSaldo = 500;
+
+            fetch("update_saldo.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `total_saldo=${tambahSaldo}`
+            })
+            .then(res => res.text())
+            .then(data => {
+                utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
+                return fetch("get_saldo.php");
+            })
+            .then(r => r.json())
+            .then(json => {
+                let saldoFormatted = new Intl.NumberFormat("id-ID", { 
+                    style: "currency", 
+                    currency: "IDR" 
+                }).format(json.saldo);
+                document.getElementById("saldo-text").textContent = saldoFormatted;
+            })
+            .catch(err => {
+                utils.addLog("Error update saldo: " + err);
+            });
+        },
+    };
+
+    // ===================== FUNGSI SERVO =====================
+    const wemos = {
+        servo: async (pos) => {
+            try {
+                const url = `${CONFIG.wemosBase}/servo?pos=${pos}`;
+                await fetch(url, { mode: 'no-cors' });
+                utils.addLog(`Servo digerakkan ke posisi ${pos}°`);
+            } catch (e) {
+                utils.addLog(`Gagal mengirim perintah ke Wemos: ${e.message}`);
+            }
+        }
+    };
     
-    try {
-        // Capture frame dari video
-        const canvas = document.createElement('canvas');
-        canvas.width = UI.video.videoWidth;
-        canvas.height = UI.video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-        
-        // Preprocess gambar
-        const img = tf.browser.fromPixels(canvas);
-        const resized = tf.image.resizeBilinear(img, [224, 224]);
-        const tensor = resized.expandDims(0);
-        const normalized = tensor.div(255.0);
-        
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    
+    (async () => {
+        utils.addLog("Inisialisasi: Servo default 90° (diam)");
+        await wemos.servo(90);
+    })();
 
-// ===================== PREDIKSI =====================
-const predictions = await appState.model.predict(normalized).data();
-const bottleConfidence = predictions[CONFIG.classIndexBottle];
-const lakbanConfidence = predictions[CONFIG.classIndexLakban];
-const kosongConfidence = predictions[CONFIG.classIndexKosong];
-
-UI.overlay.textContent = 
-  `Confidence Botol: ${(bottleConfidence * 100).toFixed(1)}% | ` +
-  `Confidence Lakban: ${(lakbanConfidence * 100).toFixed(1)}% | ` +
-  `Confidence Kosong: ${(kosongConfidence * 100).toFixed(1)}%`;
-
-const currentTime = Date.now();
-
-// ✅ Logika teratur: hanya satu jalan tiap frame
-// BOTOL
-if (bottleConfidence > CONFIG.detectionThreshold) {
-    appState.stableBottle++;
-    appState.stableLakban = 0;
-    appState.stableKosong = 0;
-
-    if (
-        appState.stableBottle >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
-    ) {
-        appState.totalBottles++;
-        appState.lastDetectionTimeBottle = currentTime;
-        utils.updateUI();
-        utils.addLog(
-            `Botol terdeteksi! Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
-        );
-
-        utils.updateSaldoServerBottle();
-        await moveRight();
-        appState.stableBottle = 0; // reset
+    async function moveRight() {
+        utils.addLog("Servo → Kanan (180°)");
+        await wemos.servo(180);
+        await sleep(2000);
+        utils.addLog("Servo kembali ke posisi default (90°)");
+        await wemos.servo(90);
     }
-}
 
-// LAKBAN
-else if (lakbanConfidence > CONFIG.detectionThreshold) {
-    appState.stableLakban++;
-    appState.stableBottle = 0;
-    appState.stableKosong = 0;
-
-    if (
-        appState.stableLakban >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeLakban) > CONFIG.detectionInterval
-    ) {
-        appState.totalLakban++;
-        appState.lastDetectionTimeLakban = currentTime;
-        utils.updateUI();
-        utils.addLog(
-            `Lakban terdeteksi! Total: ${appState.totalLakban} (${(lakbanConfidence * 100).toFixed(1)}%)`
-        );
-
-        utils.updateSaldoServerLakban();
-        await moveRight();
-        appState.stableLakban = 0;
+    async function moveLeft() {
+        utils.addLog("Servo → Kiri (0°)");
+        await wemos.servo(0);
+        await sleep(2000);
+        utils.addLog("Servo kembali ke posisi default (90°)");
+        await wemos.servo(90);
     }
-}
 
-// KOSONG
-else if     (kosongConfidence >= 0.1 && kosongConfidence <= 1.0
-) {
-    appState.stableKosong++;
-    appState.stableBottle = 0;
-    appState.stableLakban = 0;
-
-    if (
-        appState.stableKosong >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
-    ) {
-        appState.lastDetectionTimeKosong = currentTime;
-        utils.addLog(`Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
-        await servoSleep();
-        appState.stableKosong = 0;
+    async function servoSleep() {
+        utils.addLog("Servo → Diam (Tengah)");
+        await wemos.servo(90);
     }
-}
 
-// GAMBAR TIDAK JELAS
-else {
-    appState.stableBottle = 0;
-    appState.stableLakban = 0;
-    appState.stableKosong = 0;
-
-    utils.addLog("Gambar tidak jelas, servo ke kiri");
-    await moveLeft();
-}
-
-// kalau model mendeteksi kelas lain (misalnya salah prediksi)
-// else {
-//     await moveLeft(); // ke kiri
-// }
-
-        
-        // Cleanup tensor
-        tf.dispose([img, resized, tensor, normalized]);
-        
-        // ⏩ selalu lanjut loop lagi
-        requestAnimationFrame(model.predict);
-    } catch (error) {
-        utils.addLog(`Error saat prediksi: ${error.message}`);
-        console.error(error);
-        controls.stopDetection();
-    }
-}
+    // ===================== FUNGSI KAMERA =====================
+    const camera = {
+        setup: async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                UI.video.srcObject = stream;
+                return new Promise((resolve) => {
+                    UI.video.onloadedmetadata = () => {
+                        resolve(UI.video);
+                    };
+                });
+            } catch (error) {
+                UI.overlay.textContent = "Status: Gagal mengakses kamera";
+                utils.addLog(`Error: Gagal mengakses kamera - ${error.message}`);
+                console.error(error);
+                return null;
+            }
         }
-        // ===================== FUNGSI KONTROL =====================
-        const controls = {
-            startDetection: () => {
-                appState.isDetecting = true;
-                UI.startBtn.textContent = "Hentikan Deteksi";
-                UI.overlay.textContent = "Status: Sedang mendeteksi...";
-                utils.addLog("Memulai deteksi botol");
-                model.predict();
-            },
+    };
+
+    // ===================== FUNGSI MODEL =====================
+    const model = {
+        load: async () => {
+            UI.overlay.textContent = "Status: Memuat model...";
+            utils.addLog("Memulai pemuatan model machine learning");
             
-            stopDetection: () => {
-
-    appState.isDetecting = false;
-    UI.startBtn.textContent = "Mulai Deteksi";
-    UI.overlay.textContent = "Status: Deteksi dihentikan";
-    utils.addLog("Deteksi dihentikan oleh pengguna");
-
-    // Kirim hasil hitungan ke server
-    fetch("save_transaksi.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
-    })
-    .then(res => res.text())
-    .then(data => {
-        utils.addLog("Transaksi tersimpan ke database: " + data);
-
-        // Reset counter setelah simpan
-        appState.totalBottles = 0;
-        appState.totalLakban = 0;
-        utils.updateUI();
-    })
-    .catch(err => {
-        utils.addLog("Gagal menyimpan transaksi: " + err);
-    });
-},
-
-
-            
-            resetCounter: () => {
-                appState.totalBottles = 0;
-                utils.updateUI();
-                utils.addLog("Hitungan botol direset ke 0");
+            try {
+                appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
+                UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Menghitung'";
+                utils.addLog("Model berhasil dimuat");
+                UI.startBtn.disabled = false;
+            } catch (error) {
+                UI.overlay.textContent = "Status: Gagal memuat model";
+                utils.addLog(`Error: Gagal memuat model - ${error.message}`);
+                console.error(error);
             }
-        };
+        },
+        predict: async () => {
+            if (!appState.isDetecting) return;
+            
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = UI.video.videoWidth;
+                canvas.height = UI.video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+                
+                const img = tf.browser.fromPixels(canvas);
+                const resized = tf.image.resizeBilinear(img, [224, 224]);
+                const tensor = resized.expandDims(0);
+                const normalized = tensor.div(255.0);
+                
+                const predictions = await appState.model.predict(normalized).data();
+                const bottleConfidence = predictions[CONFIG.classIndexBottle];
+                const lakbanConfidence = predictions[CONFIG.classIndexLakban];
+                const kosongConfidence = predictions[CONFIG.classIndexKosong];
 
-        // ===================== EVENT LISTENERS =====================
-        UI.startBtn.addEventListener('click', () => {
-            if (appState.isDetecting) {
+                UI.overlay.textContent = 
+                    `Botol: ${(bottleConfidence * 100).toFixed(1)}% | ` +
+                    `Lakban: ${(lakbanConfidence * 100).toFixed(1)}% | ` +
+                    `Kosong: ${(kosongConfidence * 100).toFixed(1)}%`;
+
+                const currentTime = Date.now();
+                
+                if (bottleConfidence > CONFIG.detectionThreshold) {
+                    appState.stableBottle++;
+                    appState.stableLakban = 0;
+                    appState.stableKosong = 0;
+
+                    if (
+                        appState.stableBottle >= appState.stableFramesNeeded &&
+                        (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
+                    ) {
+                        appState.totalBottles++;
+                        appState.lastDetectionTimeBottle = currentTime;
+                        utils.updateUI();
+                        utils.addLog(`Botol terdeteksi! Total: ${appState.totalBottles}`);
+                        utils.updateSaldoServerBottle();
+                        await moveRight();
+                        appState.stableBottle = 0;
+                    }
+                } else if (lakbanConfidence > CONFIG.detectionThreshold) {
+                    appState.stableLakban++;
+                    appState.stableBottle = 0;
+                    appState.stableKosong = 0;
+
+                    if (
+                        appState.stableLakban >= appState.stableFramesNeeded &&
+                        (currentTime - appState.lastDetectionTimeLakban) > CONFIG.detectionInterval
+                    ) {
+                        appState.totalLakban++;
+                        appState.lastDetectionTimeLakban = currentTime;
+                        utils.updateUI();
+                        utils.addLog(`Lakban terdeteksi! Total: ${appState.totalLakban}`);
+                        utils.updateSaldoServerLakban();
+                        await moveRight();
+                        appState.stableLakban = 0;
+                    }
+                } else if (kosongConfidence > 0.5) { // Confidence kosong tidak perlu terlalu tinggi
+                    appState.stableKosong++;
+                    appState.stableBottle = 0;
+                    appState.stableLakban = 0;
+
+                    if (
+                        appState.stableKosong >= appState.stableFramesNeeded &&
+                        (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
+                    ) {
+                        appState.lastDetectionTimeKosong = currentTime;
+                        utils.addLog(`Kosong terdeteksi.`);
+                        await servoSleep();
+                        appState.stableKosong = 0;
+                    }
+                }
+                
+                tf.dispose([img, resized, tensor, normalized]);
+                requestAnimationFrame(model.predict);
+            } catch (error) {
+                utils.addLog(`Error saat prediksi: ${error.message}`);
+                console.error(error);
                 controls.stopDetection();
-            } else {
-                controls.startDetection();
             }
-        });
+        }
+    }
+
+    // ===================== FUNGSI KONTROL =====================
+    const controls = {
+        startDetection: () => {
+            appState.isDetecting = true;
+            UI.startBtn.textContent = "Hentikan Menghitung";
+            UI.overlay.textContent = "Status: Sedang mendeteksi...";
+            utils.addLog("Memulai deteksi sampah");
+            model.predict();
+        },
         
-        UI.resetBtn.addEventListener('click', controls.resetCounter);
+        stopDetection: () => {
+            appState.isDetecting = false;
+            UI.startBtn.textContent = "Mulai Menghitung";
+            UI.overlay.textContent = "Status: Deteksi dihentikan";
+            utils.addLog("Deteksi dihentikan oleh pengguna");
+        },
+        resetCounter: () => {
+            appState.totalBottles = 0;
+            appState.totalLakban = 0;
+            utils.updateUI();
+            utils.addLog("Hitungan botol dan lakban direset ke 0");
+        }
+    };
+    
+    // ===================== EVENT LISTENERS =====================
+    UI.startBtn.addEventListener('click', () => {
+        if (appState.isDetecting) {
+            controls.stopDetection();
+        } else {
+            controls.startDetection();
+        }
+    });
+    
+    UI.resetBtn.addEventListener('click', controls.resetCounter);
 
-        // ===================== INISIALISASI APLIKASI =====================
-        const initApp = async () => {
-            UI.startBtn.disabled = true;
-            UI.resetBtn.disabled = false;
-            
-            await camera.setup();
-            await model.load();
-            
-            UI.video.play();
-            UI.overlay.textContent = "Status: Kamera siap. Klik 'Mulai Deteksi'";
-        };
-
-        window.onload = initApp;
-
+    // ===================== INISIALISASI APLIKASI =====================
+    const initApp = async () => {
+        UI.startBtn.disabled = true;
+        UI.resetBtn.disabled = false;
         
-    </script>
+        await camera.setup();
+        await model.load();
+        
+        UI.video.play();
+        UI.overlay.textContent = "Status: Kamera siap. Klik 'Mulai Menghitung'";
+    };
+
+    window.onload = initApp;
+</script>
 </body>
 </html>

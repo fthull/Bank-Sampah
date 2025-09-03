@@ -22,15 +22,15 @@ if ($conn->connect_error) {
     exit();
 }
 
-// Mengambil data transaksi dari 7 hari terakhir
+// Mengambil data transaksi dari 7 hari terakhir dari tabel `transaksi_2`
 $sql = "SELECT
-            DATE(tanggal_transaksi) AS tanggal,
-            SUM(CASE WHEN jenis_transaksi = 'setor' THEN jumlah ELSE 0 END) AS pemasukan,
-            SUM(CASE WHEN jenis_transaksi = 'tarik' THEN jumlah ELSE 0 END) AS pengeluaran
+            DATE(created_at) AS tanggal,
+            SUM(CASE WHEN jenis = 'setor' THEN jumlah ELSE 0 END) AS pemasukan,
+            SUM(CASE WHEN jenis = 'tarik' THEN jumlah ELSE 0 END) AS pengeluaran
         FROM
-            riwayat_transaksi
+            transaksi_2
         WHERE
-            user_id = ? AND tanggal_transaksi >= CURDATE() - INTERVAL 7 DAY
+            user_id = ? AND created_at >= CURDATE() - INTERVAL 7 DAY
         GROUP BY
             tanggal
         ORDER BY
@@ -42,15 +42,12 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 $data = [];
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        $data[] = $row;
-    }
+while ($row = $result->fetch_assoc()) {
+    $data[] = $row;
 }
 
 $stmt->close();
 $conn->close();
 
-// Mengirimkan data dalam format JSON
 echo json_encode($data);
 ?>

@@ -172,22 +172,27 @@ if (!empty($foto) && file_exists($uploadDir . $currentFotoFileName)) {
             background-color: var(--bg-light);
             min-height: 100vh;
         }
-        body {
+          body {
             font-family: 'Montserrat', sans-serif;
-            background-color: transparent;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 70px;
+            background-color: var(--bg-light);
             color: var(--text-dark);
+            padding-bottom: 70px; /* Space for mobile nav */
+            line-height: 1.6;
             overflow-x: hidden;
-            padding-top: 0;
+        }
+
+        /* Adjust body padding for fixed-top navbar on desktop */
+        @media (min-width: 769px) {
+            body {
+                padding-top: 70px; /* Add padding to prevent content from being hidden by the fixed navbar */
+            }
         }
 
         /* --- Navbar Style (Menyerupai beranda.php) --- */
         .desktop-navbar {
             background: var(--gradient-main);
             box-shadow: 0 2px 10px var(--shadow-medium);
+            z-index: 1000;
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -471,7 +476,7 @@ if (!empty($foto) && file_exists($uploadDir . $currentFotoFileName)) {
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Bank Sampah</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -489,6 +494,7 @@ if (!empty($foto) && file_exists($uploadDir . $currentFotoFileName)) {
         </div>
     </div>
 </nav>
+
 <div class="mobile-bottom-nav">
     <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
     <a href="beranda.php" class="<?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>"><i class="fas fa-home"></i><span>Home</span></a>
