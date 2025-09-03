@@ -773,7 +773,7 @@
         </div>
 
         <div class="footer-bottom">
-            <p>© 2025 Bank Sampah Indonesia – Semua Hak Dilindungi</p>
+            <p>© 2025 Wabi Teknologi Indonesia</p>
         </div>
     </footer>
 
