@@ -1,15 +1,14 @@
 <?php
-
-$servername = "localhost";
+$servername = "127.0.0.1";
 $username = "root";
-$password = "";
+$password = ""; 
 $dbname = "bank_sampah";
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+$conn = mysqli_connect($servername, $username, $password, $dbname);
 
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+
+// Cek koneksi
+if (!$conn) {
+    die("Koneksi gagal: " . mysqli_connect_error());
 }
 ?>

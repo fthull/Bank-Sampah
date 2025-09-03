@@ -66,11 +66,11 @@ include "conn.php";
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" href="index.php">Beranda</a></li>
+        <li class="nav-item"><a class="nav-link" href="beranda.php">Beranda</a></li>
         <li class="nav-item"><a class="nav-link" href="history.php">History</a></li>
         <li class="nav-item"><a class="nav-link" href="harga.php">Setor Sampah</a></li>
-        <li class="nav-item"><a class="nav-link" href="kontak.php">Kontak</a></li>
-        <li class="nav-item"><a class="btn btn-light btn-sm ms-2" href="login.php">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="kontak.php">Penarikan</a></li>
+        <li class="nav-item"><a class="fas fa-user"></i><span>Akun</span></a></li>
       </ul>
     </div>
   </div>
@@ -78,11 +78,11 @@ include "conn.php";
 
 <!-- Bottom Navbar Mobile -->
 <div class="mobile-bottom-nav">
-  <a href="index.php"><i class="fas fa-home"></i><span>Home</span></a>
+  <a href="beranda.php"><i class="fas fa-home"></i><span>Home</span></a>
   <a href="history.php"><i class="fas fa-history"></i><span>History</span></a>
   <a href="harga.php"><i class="fas fa-recycle"></i><span>Setor</span></a>
-  <a href="kontak.php"><i class="fas fa-phone"></i><span>Kontak</span></a>
-  <a href="login.php"><i class="fas fa-user"></i><span>Login</span></a>
+   <a href="saldo.php"><i class="fas fa-money-bill-wave"></i><span>Penarikan</span></a>
+  <a href="login.php"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
 
 <div class="container mt-4">
