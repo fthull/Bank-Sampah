@@ -4,7 +4,6 @@
 include "conn.php";
 session_start();
 
-// Periksa apakah pengguna sudah login. Jika tidak, arahkan kembali ke halaman login.
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -42,6 +41,7 @@ $columns = [];
 if ($check_columns) {
     while ($col = mysqli_fetch_assoc($check_columns)) {
         $columns[] = $col['Field'];
+
     }
 }
 ?>
@@ -642,5 +642,6 @@ if ($check_columns) {
 </script>
 <?php endif; ?>
 <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 </body>
 </html>

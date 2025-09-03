@@ -18,15 +18,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (password_verify($password, $data['password'])) {
             // simpan session
             $_SESSION['login'] = true;
+
             $_SESSION['user_id'] = $data['id'];
             $_SESSION['username'] = $data['nama'];
             $_SESSION['role'] = $data['role'];
+
 
             // cek role -> arahkan ke halaman sesuai role
             if ($data['role'] === 'admin') {
                 header("Location: dashboard.php");
             } elseif ($data['role'] === 'nasabah') {
+
                 header("Location: beranda.php");
+
             } else {
                 $error = "Role tidak dikenali!";
             }
@@ -211,6 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
 
+
         /* --- Perubahan untuk Responsif (ditambahkan) --- */
         @media (max-width: 600px) {
             .login-box {
@@ -239,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 font-size: 1rem; /* Sesuaikan ukuran font */
             }
         }
+
     </style>
 </head>
 <body>
@@ -265,12 +271,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="btn">Masuk</button>
         </form>
+
        <div class="footer-text">
+
             Belum punya akun? <a href="register.php"><strong>Daftar di sini</strong></a>
         </div>
         <div class="footer-text" style="margin-top: 10px;">
             <a href="index.php"><strong>Kembali ke Beranda</strong></a>
         </div>
+    </div>
+</body>
+</html>
     </div>
 </body>
 </html>
