@@ -165,14 +165,21 @@ function format_date($date_string) {
             align-items: center;
             transition: color 0.3s ease, transform 0.3s ease;
         }
-        .mobile-bottom-nav a:hover {
+.mobile-bottom-nav a:hover {
             color: var(--accent-yellow);
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+            padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
+
         }
         .mobile-bottom-nav a.active {
             color: var(--accent-yellow);
             font-weight: 600;
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+            padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
         }
         .mobile-bottom-nav i {
             display: block;

@@ -1,16 +1,6 @@
 <?php
 session_start();
 
-// Periksa apakah pengguna sudah login
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit();
-}
-
-$user_id = $_SESSION['user_id'];
-$username = $_SESSION['username'];
-$current_page = basename($_SERVER['PHP_SELF']);
-
 // Koneksi ke database
 $servername = "localhost";
 $db_username = "root";
@@ -23,6 +13,26 @@ $conn = new mysqli($servername, $db_username, $db_password, $dbname);
 if ($conn->connect_error) {
     die("Koneksi gagal: " . $conn->connect_error);
 }
+
+// Periksa apakah pengguna sudah login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+$username = $_SESSION['username'];
+$current_page = basename($_SERVER['PHP_SELF']);
+
+// Ambil data user dari database
+$query = mysqli_query($conn, "SELECT nama_lengkap FROM users WHERE id='$user_id' LIMIT 1");
+$data_user = mysqli_fetch_assoc($query);
+
+$nama_lengkap = $data_user['nama_lengkap'] ?? '';
+
+// Tentukan nama yang ditampilkan
+$nama_tampil = !empty($nama_lengkap) ? $nama_lengkap : $username;
+
 
 // === BAGIAN YANG DIUBAH UNTUK MENGAMBIL SALDO DARI TABEL 'saldo' ===
 // Ambil data saldo langsung dari tabel `saldo`
@@ -192,12 +202,19 @@ if (isset($_GET['status'])) {
         }
         .mobile-bottom-nav a:hover {
             color: var(--accent-yellow);
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+                        padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
+
         }
         .mobile-bottom-nav a.active {
             color: var(--accent-yellow);
             font-weight: 600;
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+            padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
         }
         .mobile-bottom-nav i {
             display: block;
@@ -470,6 +487,130 @@ if (isset($_GET['status'])) {
             height: 300px;
             width: 100%;
         }
+.footer {
+            background: #fafffaff;
+            color: #333;
+            padding: 55px 20px 30px;
+            /* height: 5px; */
+            text-align: center;
+        }
+        .footer-top {
+            margin-bottom: 40px;
+        }
+        .footer-logo {
+            width: 110px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        .footer h3 {
+            font-size: 28px;
+            margin: 5px 0 10px;
+            font-family: 'Montserrat', sans-serif;
+            color: #1f6e2f;
+        }
+        .footer-desc {
+            font-size: 15px;
+            color: #555;
+            max-width: 550px;
+            margin: auto;
+        }
+        .footer-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 50px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .footer-col {
+            flex: 1;
+            min-width: 250px;
+            text-align: left;
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+        }
+        .footer-col:hover {
+            transform: translateY(-5px);
+        }
+        .footer h4 {
+            font-size: 20px;
+            margin-bottom: 25px;
+            color: #28a745;
+            position: relative;
+        }
+        .footer h4::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -10px;
+            width: 40px;
+            height: 3px;
+            background: #28a745;
+            border-radius: 2px;
+        }
+        .footer ul {
+            list-style: none;
+            padding: 0;
+        }
+        .footer ul li {
+            margin-bottom: 15px;
+        }
+        .footer ul li a {
+            text-decoration: none;
+            color: #333;
+            font-size: 15px;
+            transition: color 0.3s;
+            display: inline-block;
+        }
+        .footer ul li a:hover {
+            color: #28a745;
+        }
+        .footer p {
+            font-size: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .footer .socials {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+        .footer .socials a {
+            width: 40px;
+            height: 40px;
+            background: #28a745;
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .footer .socials a:hover {
+            background: #1e7e34;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+                .footer-bottom {
+            border-top: 1px solid #dcdcdc;
+            padding-top: 20px;
+            font-size: 14px;
+            color: #888;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-bottom p {
+            margin: 0;
+        }
 
         /* Animasi */
         @keyframes fadeInDown {
@@ -544,6 +685,19 @@ if (isset($_GET['status'])) {
             .edu-card .edu-icon { font-size: 2.5rem; }
             .edu-card .content h4 { font-size: 1.1rem; }
             .edu-card .content p { font-size: 0.9rem; }
+
+            .footer-col {
+                /* Perbaikan: Mengatur min-width agar card footer lebih besar */
+                min-width: 80%;
+                text-align: center;
+            }
+            .footer-col h4::after {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .footer p, .footer .socials {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -576,7 +730,7 @@ if (isset($_GET['status'])) {
     <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
     <div class="header">
-        <h1>Selamat Datang Kembali, <?php echo htmlspecialchars($username); ?>!</h1>
+        <h1>Selamat Datang Kembali, <?php echo htmlspecialchars($nama_tampil); ?>!</h1>
         <p>Mari jadikan sampahmu sebagai tabungan masa depan di Bank Sampah Banguntapan.</p>
     </div>
 
@@ -653,6 +807,44 @@ if (isset($_GET['status'])) {
             </div>
         </div>
     </div>
+    
+    <footer class="footer">
+        <div class="footer-top">
+            <img src="aset/logop.png" alt="Logo Bank Sampah" class="footer-logo">
+            <h3>Bank Sampah Indonesia</h3>
+            <p class="footer-desc">
+                Mengelola sampah jadi lebih bernilai, menuju Indonesia yang hijau dan bersih.
+            </p>
+        </div>
+
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>Menu</h4>
+                <ul>
+                    <li><a href="#">Beranda</a></li>
+                    <li><a href="register.php">Pendaftaran</a></li>
+                    <li><a href="#education">Edukasi</a></li>
+                    <li><a href="#contact">Kontak</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col" id="contact">
+                <h4>Kontak</h4>
+                <p><i class="fas fa-phone"></i> +62 812 3456 7890</p>
+                <p><i class="fas fa-envelope"></i> info@banksampah.id</p>
+                <p><i class="fas fa-map-marker-alt"></i> Jl. Merdeka No. 123, Jakarta</p>
+                <div class="socials">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2025 Wabi Teknologi Indonesia</p>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

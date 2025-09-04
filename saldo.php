@@ -223,12 +223,19 @@ $conn->close();
         }
         .mobile-bottom-nav a:hover {
             color: var(--accent-yellow);
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+            padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
+
         }
         .mobile-bottom-nav a.active {
             color: var(--accent-yellow);
             font-weight: 600;
-            transform: translateY(-3px);
+            transform: translateY(-20px);
+            padding-top: 12px;
+            background: var(--primary-green);
+            border-radius: 50%;
         }
         .mobile-bottom-nav i {
             display: block;
