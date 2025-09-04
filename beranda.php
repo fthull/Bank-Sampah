@@ -47,7 +47,7 @@ $message = '';
 $message_type = '';
 if (isset($_GET['status'])) {
     $status = $_GET['status'];
-    
+
     switch ($status) {
         case 'success':
             $message = isset($_GET['amount']) ? "Penarikan sebesar Rp " . number_format($_GET['amount'], 2, ',', '.') . " berhasil diajukan." : "Transaksi berhasil.";
@@ -100,7 +100,7 @@ if (isset($_GET['status'])) {
         }
 
         /* Gaya Umum */
-         body {
+        body {
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg-light);
             color: var(--text-dark);
@@ -162,7 +162,7 @@ if (isset($_GET['status'])) {
             background-color: var(--accent-yellow);
             border-radius: 2px;
         }
-        
+
         /* Mobile Navbar */
         .mobile-bottom-nav {
             display: none;
@@ -204,7 +204,7 @@ if (isset($_GET['status'])) {
             font-size: 20px;
             margin-bottom: 5px;
         }
-        
+
         /* Header / Hero Section */
         .header {
             background: var(--gradient-main);
@@ -244,7 +244,7 @@ if (isset($_GET['status'])) {
             text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
             animation: fadeInUp 1s ease-out;
         }
-        
+
         /* Saldo Card */
         .saldo-card {
             background: var(--card-background);
@@ -317,6 +317,8 @@ if (isset($_GET['status'])) {
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+            min-width: 180px; /* Atur lebar minimum yang sama untuk kedua tombol */
+            justify-content: center; /* Pusatkan konten */
         }
         .action-buttons a:hover {
             transform: translateY(-5px) scale(1.02);
@@ -461,7 +463,7 @@ if (isset($_GET['status'])) {
             color: var(--text-light);
             margin: 0;
         }
-        
+
         /* Gaya untuk chart */
         .chart-container {
             position: relative;
@@ -584,8 +586,8 @@ if (isset($_GET['status'])) {
             <p class="total-amount"><?php echo number_format($total_saldo_raw, 2, ',', '.'); ?></p>
             <div class="action-buttons-container">
                 <div class="action-buttons">
-                    <a href="saldo.php"><i class="fas fa-hand-holding-usd"></i> Tarik Saldo</a>
-                    <a href="harga.php"><i class="fas fa-box"></i> Setor Sampah</a>
+                    <a href="saldo.php"><i class="fas fa-hand-holding-usd"></i> Tarik Saldo </a>
+                    <a href="harga.php"><i class="fas fa-box"></i>Setor Sampah</a>
                 </div>
             </div>
         </div>
@@ -609,7 +611,7 @@ if (isset($_GET['status'])) {
                 Mulai tabung sampahmu hari ini, lihat saldo bertumbuh, dan rasakan kepuasan berkontribusi pada lingkungan yang lebih bersih dan masa depan finansial yang lebih baik!
             </p>
         </div>
-        
+
         <div class="fact-section">
             <h3>Tahukah Kamu?🧐</h3>
             <div class="fact-card">
@@ -651,7 +653,7 @@ if (isset($_GET['status'])) {
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -690,10 +692,10 @@ if (isset($_GET['status'])) {
                     return;
                 }
 
-                // Mengubah tanggal menjadi format hari, tanggal, bulan, dan tahun
+                // Mengubah tanggal menjadi format hanya tanggal dan bulan
                 const labels = data.map(item => {
-                    const date = new Date(item.tanggal + 'T00:00:00'); 
-                    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                    const date = new Date(item.tanggal + 'T00:00:00');
+                    const options = { day: 'numeric', month: 'long' };
                     return date.toLocaleDateString('id-ID', options);
                 });
 

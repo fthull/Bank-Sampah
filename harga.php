@@ -465,17 +465,37 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
         load: async () => {
             UI.overlay.textContent = "Status: Memuat model...";
             utils.addLog("Memulai pemuatan model machine learning");
-            
 
-            try {
-                appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
-                UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Menghitung'";
-                utils.addLog("Model berhasil dimuat");
-                UI.startBtn.disabled = false;
-            } catch (error) {
-                UI.overlay.textContent = "Status: Gagal memuat model";
-                utils.addLog(`Error: Gagal memuat model - ${error.message}`);
-                console.error(error);
+            stopDetection: () => {
+
+    appState.isDetecting = false;
+    UI.startBtn.textContent = "Mulai Deteksi";
+    UI.overlay.textContent = "Status: Deteksi dihentikan";
+    utils.addLog("Deteksi dihentikan oleh pengguna");
+
+    // Kirim hasil hitungan ke server
+    fetch("save_transaksi.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
+})
+.then(res => res.text())
+.then(data => {
+    if (data === "OK") {
+        utils.addLog("Transaksi tersimpan ke database");
+    } else if (data === "NO_DATA") {
+        utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
+    } else {
+        utils.addLog("Gagal menyimpan transaksi: " + data);
+    }
+});
+            },
+
+            
+            resetCounter: () => {
+                appState.totalBottles = 0;
+                utils.updateUI();
+                utils.addLog("Hitungan botol direset ke 0");
 
             }
         },
