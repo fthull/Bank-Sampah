@@ -539,7 +539,7 @@
     <section class="content-section">
         <div class="container text-section">
             <h2>Siapa Kami?</h2>
-            <p>Selamat datang di Bank Sampah Indonesia! Kami adalah sebuah inisiatif komunitas yang berdedikasi untuk mengubah cara pandang masyarakat terhadap sampah. Berdiri sejak tahun **2025**, kami hadir sebagai solusi inovatif untuk masalah sampah di **Banguntapan, Daerah Istimewa Yogyakarta**.</p>
+            <p>Selamat datang di Bank Sampah Indonesia! Kami adalah sebuah inisiatif komunitas yang berdedikasi untuk mengubah cara pandang masyarakat terhadap sampah. Berdiri sejak tahun 2025, kami hadir sebagai solusi inovatif untuk masalah sampah di Banguntapan, Daerah Istimewa Yogyakarta.</p>
             <p>Kami percaya bahwa dengan pengelolaan yang tepat, sampah yang selama ini dianggap sebagai limbah bisa menjadi aset yang berharga, baik bagi lingkungan maupun ekonomi lokal. Kami bertekad untuk menciptakan lingkungan yang lebih bersih, sehat, dan berkelanjutan untuk generasi mendatang.</p>
         </div>
     </section>
