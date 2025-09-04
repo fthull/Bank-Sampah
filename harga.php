@@ -365,9 +365,48 @@ addLog: (message) => {
         }
     },
 
+
+    // ===================== FUNGSI MODEL =====================
+    const model = {
+        load: async () => {
+            UI.overlay.textContent = "Status: Memuat model...";
+            utils.addLog("Memulai pemuatan model machine learning");
+
+            stopDetection: () => {
+
+    appState.isDetecting = false;
+    UI.startBtn.textContent = "Mulai Deteksi";
+    UI.overlay.textContent = "Status: Deteksi dihentikan";
+    utils.addLog("Deteksi dihentikan oleh pengguna");
+
+    // Kirim hasil hitungan ke server
+    fetch("save_transaksi.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
+})
+.then(res => res.text())
+.then(data => {
+    if (data === "OK") {
+        utils.addLog("Transaksi tersimpan ke database");
+    } else if (data === "NO_DATA") {
+        utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
+    } else {
+        utils.addLog("Gagal menyimpan transaksi: " + data);
+    }
+});
+            },
+
+            
+            resetCounter: () => {
+                appState.totalBottles = 0;
+                utils.updateUI();
+                utils.addLog("Hitungan botol direset ke 0");
+
     updateSaldoServerBottle: () => {
 
         const tambahSaldo = 200;
+
 
         fetch("update_saldo.php", {
             method: "POST",
