@@ -29,9 +29,8 @@ if ($saldo_stmt) {
 
 
 // Ambil semua transaksi user dari tabel `transaksi_2` menggunakan Prepared Statement.
-// Perintah ini mengambil data berdasarkan 'user_id' dan mengurutkan berdasarkan tanggal terbaru.
-// Tambahkan LIMIT 10 untuk membatasi jumlah transaksi yang ditampilkan.
-$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+// *** PERBAIKAN: Menghilangkan LIMIT 10 agar semua riwayat tampil. ***
+$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC");
 if ($transaksi_stmt) {
     mysqli_stmt_bind_param($transaksi_stmt, "i", $user_id);
     mysqli_stmt_execute($transaksi_stmt);
@@ -165,7 +164,7 @@ function format_date($date_string) {
             align-items: center;
             transition: color 0.3s ease, transform 0.3s ease;
         }
-.mobile-bottom-nav a:hover {
+        .mobile-bottom-nav a:hover {
             color: var(--accent-yellow);
             transform: translateY(-20px);
             padding-top: 12px;
@@ -270,7 +269,7 @@ function format_date($date_string) {
             line-height: 1.1;
         }
         .saldo-card .total-amount::before {
-           
+            content: 'Rp ';
             font-size: 0.4em;
             font-weight: 600;
             position: relative;
@@ -490,7 +489,7 @@ function format_date($date_string) {
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
     <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
-    <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
+    <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
 
 <div class="header">
@@ -536,7 +535,9 @@ function format_date($date_string) {
                         <p><?php echo $deskripsi; ?></p>
                         <p><small class="text-muted"><?php echo $tanggal; ?></small></p>
                     </div>
-                   
+                    <div class="amount">
+                         Rp <?php echo $sign . number_format($jumlah, 0, ',', '.'); ?>
+                    </div>
                 </div>
             <?php } ?>
         </div>
