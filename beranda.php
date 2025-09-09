@@ -203,7 +203,7 @@ if (isset($_GET['status'])) {
         .mobile-bottom-nav a:hover {
             color: var(--accent-yellow);
             transform: translateY(-20px);
-                        padding-top: 12px;
+            padding-top: 12px;
             background: var(--primary-green);
             border-radius: 50%;
 
@@ -896,7 +896,8 @@ if (isset($_GET['status'])) {
 
                 const ctx = document.getElementById('dailyStatsChart').getContext('2d');
                 new Chart(ctx, {
-                    type: 'bar',
+                    type: 'line',
+                    // type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [

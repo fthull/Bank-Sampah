@@ -29,8 +29,11 @@ if ($saldo_stmt) {
 
 
 // Ambil semua transaksi user dari tabel `transaksi_2` menggunakan Prepared Statement.
-// *** PERBAIKAN: Menghilangkan LIMIT 10 agar semua riwayat tampil. ***
-$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC");
+
+// Perintah ini mengambil data berdasarkan 'user_id' dan mengurutkan berdasarkan tanggal terbaru.
+// Tambahkan LIMIT 10 untuk membatasi jumlah transaksi yang ditampilkan.
+$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, metode, status, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+
 if ($transaksi_stmt) {
     mysqli_stmt_bind_param($transaksi_stmt, "i", $user_id);
     mysqli_stmt_execute($transaksi_stmt);
@@ -47,6 +50,23 @@ mysqli_close($conn);
 function format_date($date_string) {
     $timestamp = strtotime($date_string);
     return date('d M Y H:i', $timestamp);
+}
+
+// Fungsi untuk format tanggal lengkap
+function format_date_full($date_string) {
+    $months = [
+        '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+        '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+        '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+    ];
+    
+    $timestamp = strtotime($date_string);
+    $day = date('d', $timestamp);
+    $month = $months[date('m', $timestamp)];
+    $year = date('Y', $timestamp);
+    $time = date('H:i', $timestamp);
+    
+    return $day . ' ' . $month . ' ' . $year . ' pukul ' . $time;
 }
 ?>
 
@@ -333,6 +353,7 @@ function format_date($date_string) {
             display: flex;
             align-items: center;
             gap: 15px;
+            cursor: pointer; /* Tambahan untuk menunjukkan item dapat diklik */
         }
         .transaction-item:hover {
             transform: translateY(-5px);
@@ -373,6 +394,111 @@ function format_date($date_string) {
         }
         .transaction-item.setor .amount { color: var(--primary-green); }
         .transaction-item.tarik .amount { color: #e74c3c; }
+
+        /* Modal Detail Transaksi */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: var(--gradient-main);
+            color: var(--white);
+            border-radius: 20px 20px 0 0;
+            padding: 25px;
+            border-bottom: none;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1.4rem;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+
+        .detail-value {
+            color: var(--text-light);
+            font-size: 1rem;
+            text-align: right;
+        }
+
+        .detail-value.amount {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .detail-value.amount.setor {
+            color: var(--primary-green);
+        }
+
+        .detail-value.amount.tarik {
+            color: #e74c3c;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-berhasil {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-gagal {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .transaction-icon-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--white);
+            margin: 0 auto 20px;
+        }
+
+        .transaction-icon-large.setor {
+            background: var(--secondary-green);
+        }
+
+        .transaction-icon-large.tarik {
+            background: #e67e22;
+        }
 
         /* Empty State */
         .empty-state {
@@ -459,6 +585,17 @@ function format_date($date_string) {
                 padding: 8px 15px;
                 font-size: 0.9rem;
             }
+            .modal-body {
+                padding: 20px;
+            }
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .detail-value {
+                text-align: left;
+            }
         }
     </style>
 </head>
@@ -526,7 +663,18 @@ function format_date($date_string) {
                 $sign = ($jenis == 'setor') ? '+' : '-';
                 $class_jenis = ($jenis == 'setor') ? 'setor' : 'tarik';
                 ?>
-                <div class="transaction-item <?php echo $class_jenis; ?>" data-jenis="<?php echo $class_jenis; ?>">
+                <div class="transaction-item <?php echo $class_jenis; ?>" 
+                     data-jenis="<?php echo $class_jenis; ?>"
+                     data-bs-toggle="modal" 
+                     data-bs-target="#transactionModal"
+                     data-id="<?php echo $transaction['id']; ?>"
+                     data-jenis-text="<?php echo ucfirst($jenis); ?>"
+                     data-deskripsi="<?php echo htmlspecialchars($deskripsi); ?>"
+                     data-jumlah="<?php echo $jumlah; ?>"
+                     data-metode="<?php echo ucfirst($transaction['metode']); ?>"
+                     data-status="<?php echo $transaction['status']; ?>"
+                     data-tanggal="<?php echo format_date_full($transaction['created_at']); ?>"
+                     data-tanggal-singkat="<?php echo $tanggal; ?>">
                     <div class="icon-box">
                         <i class="<?php echo $icon; ?>"></i>
                     </div>
@@ -536,7 +684,12 @@ function format_date($date_string) {
                         <p><small class="text-muted"><?php echo $tanggal; ?></small></p>
                     </div>
                     <div class="amount">
-                         Rp <?php echo $sign . number_format($jumlah, 0, ',', '.'); ?>
+
+                        <span><?php echo $sign; ?>Rp <?php echo number_format($jumlah, 0, ',', '.'); ?></span>
+                        <small class="d-block text-muted mt-1">
+                            <i class="fas fa-eye me-1"></i>Detail
+                        </small>
+
                     </div>
                 </div>
             <?php } ?>
@@ -554,12 +707,76 @@ function format_date($date_string) {
     </div>
 </div>
 
+<!-- Modal Detail Transaksi -->
+<div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionModalLabel">
+                    <i class="fas fa-receipt me-2"></i>Detail Transaksi
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="transaction-icon-large" id="modalIcon">
+                        <i class="fas fa-plus" id="modalIconSymbol"></i>
+                    </div>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">ID Transaksi</span>
+                    <span class="detail-value" id="modalId">#TRX001</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Jenis Transaksi</span>
+                    <span class="detail-value" id="modalJenis">Setor Saldo</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Deskripsi</span>
+                    <span class="detail-value" id="modalDeskripsi">Setor 3 botol plastik</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Jumlah</span>
+                    <span class="detail-value amount" id="modalJumlah">+Rp 600</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Metode</span>
+                    <span class="detail-value" id="modalMetode">Tunai</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">
+                        <span class="status-badge" id="modalStatus">Berhasil</span>
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Tanggal & Waktu</span>
+                    <span class="detail-value" id="modalTanggal">1 September 2025 pukul 21:22</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const filterTabs = document.querySelectorAll('#filterTabs .nav-link');
         const transactionItems = document.querySelectorAll('.transaction-item');
 
+        // Filter functionality
         filterTabs.forEach(tab => {
             tab.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -574,6 +791,47 @@ function format_date($date_string) {
                     }
                 });
             });
+        });
+
+        // Modal functionality
+        const transactionModal = document.getElementById('transactionModal');
+        
+        transactionModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget; // Button that triggered the modal
+            
+            // Extract data from data-* attributes
+            const id = button.getAttribute('data-id');
+            const jenis = button.getAttribute('data-jenis');
+            const jenisText = button.getAttribute('data-jenis-text');
+            const deskripsi = button.getAttribute('data-deskripsi');
+            const jumlah = parseFloat(button.getAttribute('data-jumlah'));
+            const metode = button.getAttribute('data-metode');
+            const status = button.getAttribute('data-status');
+            const tanggal = button.getAttribute('data-tanggal');
+            
+            // Update modal content
+            document.getElementById('modalId').textContent = '#TRX' + String(id).padStart(3, '0');
+            document.getElementById('modalJenis').textContent = jenisText + ' Saldo';
+            document.getElementById('modalDeskripsi').textContent = deskripsi || 'Tidak ada deskripsi';
+            document.getElementById('modalMetode').textContent = metode;
+            document.getElementById('modalTanggal').textContent = tanggal;
+            
+            // Update amount with proper formatting and sign
+            const modalJumlah = document.getElementById('modalJumlah');
+            const sign = jenis === 'setor' ? '+' : '-';
+            modalJumlah.textContent = sign + 'Rp ' + jumlah.toLocaleString('id-ID');
+            modalJumlah.className = 'detail-value amount ' + jenis;
+            
+            // Update status badge
+            const modalStatus = document.getElementById('modalStatus');
+            modalStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            modalStatus.className = 'status-badge status-' + status;
+            
+            // Update icon
+            const modalIcon = document.getElementById('modalIcon');
+            const modalIconSymbol = document.getElementById('modalIconSymbol');
+            modalIcon.className = 'transaction-icon-large ' + jenis;
+            modalIconSymbol.className = jenis === 'setor' ? 'fas fa-plus' : 'fas fa-minus';
         });
     });
 </script>
