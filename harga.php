@@ -30,7 +30,6 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -293,56 +292,48 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-        // ===================== KONFIGURASI =====================
-        const CONFIG = {
-            modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/SF0K0U939/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/GKEIbonIo/model.json',
-            // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-            detectionThreshold: 0.8,    // Minimal confidence 80%
-            detectionInterval: 4000,    // Interval minimal deteksi (2 detik)
-            classIndexKosong: 2,
-            classIndexBottle: 0,        // indeks kelas Botol
-            classIndexKaleng: 1,
-            wemosBase: 'http://172.17.91.191' // <-- GANTI ke IP Wemos Anda
+// ===================== KONFIGURASI =====================
+const CONFIG = {
+    modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
+    detectionThreshold: 0.8,    // Minimal confidence 80%
+    detectionInterval: 4000,    // Interval minimal deteksi (4 detik)
+    classIndexKosong: 2,
+    classIndexBottle: 0,        // indeks kelas Botol
+    classIndexKaleng: 1,
+    wemosBase: 'http://172.17.91.201' // <-- GANTI ke IP Wemos Anda
+};
 
-        };
+// ===================== VARIABEL APLIKASI =====================
+let appState = {
+    model: null,
+    video: null,
+    isDetecting: false,
+    totalBottles: 0,
+    totalKaleng: 0,
+    lastDetectionTimeBottle: 0,
+    lastDetectionTimeKaleng: 0,
+    lastDetectionTimeKosong: 0,
+    stableFramesNeeded: 9, // butuh N frame berturut-turut untuk valid
+    stableBottle: 0,
+    stableKaleng: 0,
+    stableKosong: 0
+};
 
-        // ===================== VARIABEL APLIKASI =====================
-        let appState = {
-            model: null,
-            video: null,
-            isDetecting: false,
-            totalBottles: 0,
+// ===================== INISIALISASI ELEMEN UI =====================
+const UI = {
+    startBtn: document.getElementById('startBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    countDisplayBottle: document.getElementById('count-display-bottle'),
+    countDisplayKaleng: document.getElementById('count-display-kaleng'),
+    overlay: document.getElementById('overlay'),
+    logElement: document.getElementById('log'),
+    video: document.getElementById('video')
+};
 
-            totalKaleng: 0,
-            lastDetectionTimeBottle: 0,
-            lastDetectionTimeKaleng: 0,
-            lastDetectionTimeKosong: 0,
-             stableFramesNeeded: 9 // butuh 3 frame berturut-turut untuk valid
-
-        };
-
-        // ===================== INISIALISASI ELEMEN UI =====================
-        const UI = {
-            startBtn: document.getElementById('startBtn'),
-            resetBtn: document.getElementById('resetBtn'),
-
-            countDisplayBottle: document.getElementById('count-display-bottle'),
-            countDisplayLakban: document.getElementById('count-display-Kaleng'),
-
-            overlay: document.getElementById('overlay'),
-            logElement: document.getElementById('log'),
-            video: document.getElementById('video')
-        };
-
-        // ===================== FUNGSI UTILITAS =====================
-
-       const utils = {
-addLog: (message) => {
-
+// ===================== FUNGSI UTILITAS =====================
+const utils = {
+    addLog: (message) => {
         const now = new Date();
         const timeString = now.toLocaleTimeString();
         const logEntry = document.createElement('p');
@@ -354,8 +345,6 @@ addLog: (message) => {
         }
     },
 
-
-
     updateUI: () => {
         if (UI.countDisplayBottle) {
             UI.countDisplayBottle.textContent = `Total Botol: ${appState.totalBottles}`;
@@ -365,49 +354,8 @@ addLog: (message) => {
         }
     },
 
-
-    // ===================== FUNGSI MODEL =====================
-    const model = {
-        load: async () => {
-            UI.overlay.textContent = "Status: Memuat model...";
-            utils.addLog("Memulai pemuatan model machine learning");
-
-            stopDetection: () => {
-
-    appState.isDetecting = false;
-    UI.startBtn.textContent = "Mulai Deteksi";
-    UI.overlay.textContent = "Status: Deteksi dihentikan";
-    utils.addLog("Deteksi dihentikan oleh pengguna");
-
-    // Kirim hasil hitungan ke server
-    fetch("save_transaksi.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalLakban}`
-})
-.then(res => res.text())
-.then(data => {
-    if (data === "OK") {
-        utils.addLog("Transaksi tersimpan ke database");
-    } else if (data === "NO_DATA") {
-        utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
-    } else {
-        utils.addLog("Gagal menyimpan transaksi: " + data);
-    }
-});
-            },
-
-            
-            resetCounter: () => {
-                appState.totalBottles = 0;
-                utils.updateUI();
-                utils.addLog("Hitungan botol direset ke 0");
-
     updateSaldoServerBottle: () => {
-
         const tambahSaldo = 200;
-
-
         fetch("update_saldo.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -416,9 +364,6 @@ addLog: (message) => {
         .then(res => res.text())
         .then(data => {
             utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
-
-            // Ambil saldo terbaru dari server
-
             return fetch("get_saldo.php");
         })
         .then(r => r.json())
@@ -429,17 +374,14 @@ addLog: (message) => {
             }).format(json.saldo);
 
             document.getElementById("saldo-text").textContent = saldoFormatted;
-
         })
         .catch(err => {
             utils.addLog("Error update saldo: " + err);
         });
-
     },
 
     updateSaldoServerKaleng: () => {
         const tambahSaldo = 500;
-
         fetch("update_saldo.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -448,8 +390,6 @@ addLog: (message) => {
         .then(res => res.text())
         .then(data => {
             utils.addLog(`Saldo bertambah Rp ${tambahSaldo} (${data})`);
-
-            // Ambil saldo terbaru dari server
             return fetch("get_saldo.php");
         })
         .then(r => r.json())
@@ -464,19 +404,10 @@ addLog: (message) => {
         .catch(err => {
             utils.addLog("Error update saldo: " + err);
         });
-    },
+    }
 };
 
-         // ===================== FUNGSI SERVO =====================
-        //  const wemos = {
-        // servo: async (pos) => {
-        //     const url = `${CONFIG.wemosBase}/servo?pos=${pos}`;
-        //     await fetch(url, { mode: 'cors' });
-        //     }
-        // };
-
-        // // helper kecil untuk jeda
-        // const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+// ===================== FUNGSI SERVO / WEMOS =====================
 const wemos = {
     servo: async (pos) => {
         try {
@@ -485,6 +416,7 @@ const wemos = {
             console.log(`Servo digerakkan ke posisi ${pos}°`);
         } catch (e) {
             console.error("Gagal mengirim perintah ke Wemos:", e);
+            utils.addLog("Gagal mengirim perintah ke Wemos: " + e.message);
         }
     }
 };
@@ -492,9 +424,7 @@ const wemos = {
 // helper kecil untuk jeda
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-
 // === Kontrol Servo ===
-
 (async () => {
     console.log("Inisialisasi: Servo default 90° (diam)");
     await wemos.servo(90); // default = diam
@@ -503,263 +433,256 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 async function moveRight() {
     console.log("Servo → Kanan (180°)");
     await wemos.servo(180);
-    await sleep(2000); // jeda 1 detik
+    await sleep(1000);
     console.log("Servo kembali ke posisi default (90°)");
     await wemos.servo(90);
 }
 
-
 async function moveLeft() {
     console.log("Servo → Kiri (0°)");
-    await wemos.servo(0); // kiri = 0 derajat
-
-    // jeda 1 detik
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
+    await wemos.servo(0);
+    await sleep(1000);
     console.log("Servo kembali ke posisi default (90°)");
-    await wemos.servo(90); // kembali ke default
+    await wemos.servo(90);
 }
-
 
 async function servoSleep() {
     console.log("Servo → Diam (Tengah)");
-    await wemos.servo(90); // misalnya diam = tengah 90 derajat
+    
+    await wemos.servo(90);
 }
 
+// ===================== FUNGSI KAMERA =====================
+const camera = {
+    setup: async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            UI.video.srcObject = stream;
+            return new Promise((resolve) => {
+                UI.video.onloadedmetadata = () => {
+                    resolve(UI.video);
+                };
+            });
+        } catch (error) {
+            UI.overlay.textContent = "Status: Gagal mengakses kamera";
+            utils.addLog(`Error: Gagal mengakses kamera - ${error.message}`);
+            console.error(error);
+            return null;
+        }
+    }
+};
 
+// ===================== FUNGSI MODEL =====================
+const model = {
+    load: async () => {
+        UI.overlay.textContent = "Status: Memuat model...";
+        utils.addLog("Memulai pemuatan model machine learning");
+        try {
+            appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
+            UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Deteksi'";
+            utils.addLog("Model berhasil dimuat");
+            UI.startBtn.disabled = false;
+        } catch (error) {
+            UI.overlay.textContent = "Status: Gagal memuat model";
+            utils.addLog(`Error: Gagal memuat model - ${error.message}`);
+            console.error(error);
+        }
+    },
 
-        // ===================== FUNGSI KAMERA =====================
-        const camera = {
-            setup: async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    UI.video.srcObject = stream;
-                    
-                    return new Promise((resolve) => {
-                        UI.video.onloadedmetadata = () => {
-                            resolve(UI.video);
-                        };
-                    });
-                } catch (error) {
-                    UI.overlay.textContent = "Status: Gagal mengakses kamera";
-                    utils.addLog(`Error: Gagal mengakses kamera - ${error.message}`);
-                    console.error(error);
-                    return null;
+    predict: async () => {
+// pakai setTimeout biar tidak terlalu sering
+if (appState.isDetecting) {
+    setTimeout(() => model.predict(), 1000); // cek tiap 0.5 detik
+}        if (!appState.model) {
+            utils.addLog('Model belum dimuat');
+            return;
+        }
+
+        try {
+            // Capture frame dari video
+            const canvas = document.createElement('canvas');
+            canvas.width = UI.video.videoWidth;
+            canvas.height = UI.video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+
+            // Preprocess gambar
+            const img = tf.browser.fromPixels(canvas);
+            const resized = tf.image.resizeBilinear(img, [224, 224]);
+            const tensor = resized.expandDims(0);
+            const normalized = tensor.div(255.0);
+
+            // ===================== PREDIKSI =====================
+            const predictions = await appState.model.predict(normalized).data();
+            const bottleConfidence = predictions[CONFIG.classIndexBottle] || 0;
+            const kalengConfidence = predictions[CONFIG.classIndexKaleng] || 0;
+            const kosongConfidence = predictions[CONFIG.classIndexKosong] || 0;
+
+            UI.overlay.textContent = 
+              `Confidence Botol: ${(bottleConfidence * 100).toFixed(1)}% | ` +
+              `Confidence Kaleng: ${(kalengConfidence * 100).toFixed(1)}% | ` +
+              `Confidence Kosong: ${(kosongConfidence * 100).toFixed(1)}%`;
+
+            const currentTime = Date.now();
+
+            // ===================== STABLE FRAME (jeda beberapa frame) =====================
+            // Reset behavior: hanya satu klasifikasi yang naik counter per frame
+            if (bottleConfidence > CONFIG.detectionThreshold) {
+                appState.stableBottle++;
+                appState.stableKaleng = 0;
+                appState.stableKosong = 0;
+
+                if (
+                    appState.stableBottle >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
+                ) {
+                    appState.totalBottles++;
+                    appState.lastDetectionTimeBottle = currentTime;
+                    utils.updateUI();
+                    utils.addLog(
+                        `Botol terdeteksi! Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
+                    );
+
+                    utils.updateSaldoServerBottle();
+                    await moveRight();
+                    appState.stableBottle = 0; // reset counter
                 }
             }
-        };
+            else if (kalengConfidence > CONFIG.detectionThreshold) {
+                appState.stableKaleng++;
+                appState.stableBottle = 0;
+                appState.stableKosong = 0;
 
-        // ===================== FUNGSI MODEL =====================
-        const model = {
-            load: async () => {
-                UI.overlay.textContent = "Status: Memuat model...";
-                utils.addLog("Memulai pemuatan model machine learning");
-                
-                try {
-                    appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
-                    UI.overlay.textContent = "Status: Model siap. Klik 'Mulai Deteksi'";
-                    utils.addLog("Model berhasil dimuat");
-                    UI.startBtn.disabled = false;
-                } catch (error) {
-                    UI.overlay.textContent = "Status: Gagal memuat model";
-                    utils.addLog(`Error: Gagal memuat model - ${error.message}`);
-                    console.error(error);
+                if (
+                    appState.stableKaleng >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeKaleng) > CONFIG.detectionInterval
+                ) {
+                    appState.totalKaleng++;
+                    appState.lastDetectionTimeKaleng = currentTime;
+                    utils.updateUI();
+                    utils.addLog(
+                        `Kaleng terdeteksi! Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
+                    );
+
+                    utils.updateSaldoServerKaleng();
+                    await moveRight();
+                    appState.stableKaleng = 0;
                 }
-            },
-            
-            predict: async () => {
-    if (!appState.isDetecting) return;
-    
-    try {
-        // Capture frame dari video
-        const canvas = document.createElement('canvas');
-        canvas.width = UI.video.videoWidth;
-        canvas.height = UI.video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-        
-        // Preprocess gambar
-        const img = tf.browser.fromPixels(canvas);
-        const resized = tf.image.resizeBilinear(img, [224, 224]);
-        const tensor = resized.expandDims(0);
-        const normalized = tensor.div(255.0);
-        
+            }
+            // jika kosong confidence di antara 60% - 100% -> diam
+            else if (kosongConfidence >= 0.1 && kosongConfidence <= 1.0) {
+                appState.stableKosong++;
+                appState.stableBottle = 0;
+                appState.stableKaleng = 0;
 
-// ===================== PREDIKSI =====================
-const predictions = await appState.model.predict(normalized).data();
-const bottleConfidence = predictions[CONFIG.classIndexBottle];
-const kalengConfidence = predictions[CONFIG.classIndexKaleng];
-const kosongConfidence = predictions[CONFIG.classIndexKosong];
+                if (
+                    appState.stableKosong >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
+                ) {
+                    appState.lastDetectionTimeKosong = currentTime;
+                    utils.addLog(`Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
+                    await servoSleep();
+                    appState.stableKosong = 0;
+                }
+            }
+            else {
+                // tidak jelas -> reset semua counter dan gerakkan servo ke kiri
+                appState.stableBottle = 0;
+                appState.stableKaleng = 0;
+                appState.stableKosong = 0;
 
-UI.overlay.textContent = 
-  `Confidence Botol: ${(bottleConfidence * 100).toFixed(1)}% | ` +
-  `Confidence Kaleng: ${(kalengConfidence * 100).toFixed(1)}% | ` +
-  `Confidence Kosong: ${(kosongConfidence * 100).toFixed(1)}%`;
+                utils.addLog("Gambar tidak jelas, servo ke kiri");
+                await moveLeft();
+            }
 
-const currentTime = Date.now();
+            // Cleanup tensor
+            tf.dispose([img, resized, tensor, normalized]);
 
-// ✅ Logika teratur: hanya satu jalan tiap frame
-// BOTOL
-if (bottleConfidence > CONFIG.detectionThreshold) {
-    appState.stableBottle++;
-    appState.stableKaleng = 0;
-    appState.stableKosong = 0;
+            // schedule next predict (jika masih mendeteksi)
+            if (appState.isDetecting) {
+                requestAnimationFrame(() => model.predict());
+            }
 
-    if (
-        appState.stableBottle >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
-    ) {
-        appState.totalBottles++;
-        appState.lastDetectionTimeBottle = currentTime;
-        utils.updateUI();
-        utils.addLog(
-            `Botol terdeteksi! Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
-        );
-
-        utils.updateSaldoServerBottle();
-        await moveRight();
-        appState.stableBottle = 0; // reset
-    }
-}
-
-// LAKBAN
-else if (kalengConfidence > CONFIG.detectionThreshold) {
-    appState.stableKaleng++;
-    appState.stableBottle = 0;
-    appState.stableKosong = 0;
-
-    if (
-        appState.stableKaleng >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeKaleng) > CONFIG.detectionInterval
-    ) {
-        appState.totalKaleng++;
-        appState.lastDetectionTimeKaleng = currentTime;
-        utils.updateUI();
-        utils.addLog(
-            `Lakban terdeteksi! Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
-        );
-
-        utils.updateSaldoServerKaleng();
-        await moveRight();
-        appState.stableKaleng = 0;
-    }
-}
-
-// KOSONG
-else if     (kosongConfidence >= 0.1 && kosongConfidence <= 1.0
-) {
-    appState.stableKosong++;
-    appState.stableBottle = 0;
-    appState.stableKaleng = 0;
-
-    if (
-        appState.stableKosong >= appState.stableFramesNeeded &&
-        (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
-    ) {
-        appState.lastDetectionTimeKosong = currentTime;
-        utils.addLog(`Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
-        await servoSleep();
-        appState.stableKosong = 0;
-    }
-}
-
-// GAMBAR TIDAK JELAS
-else {
-    appState.stableBottle = 0;
-    appState.stableKaleng = 0;
-    appState.stableKosong = 0;
-
-    utils.addLog("Gambar tidak jelas, servo ke kiri");
-    await moveLeft();
-}
-
-// kalau model mendeteksi kelas lain (misalnya salah prediksi)
-// else {
-//     await moveLeft(); // ke kiri
-// }
-
-        
-        // Cleanup tensor
-        tf.dispose([img, resized, tensor, normalized]);
-        
-        // ⏩ selalu lanjut loop lagi
-        requestAnimationFrame(model.predict);
-    } catch (error) {
-        utils.addLog(`Error saat prediksi: ${error.message}`);
-        console.error(error);
-        controls.stopDetection();
-    }
-}
+        } catch (error) {
+            utils.addLog(`Error saat prediksi: ${error.message}`);
+            console.error(error);
+            controls.stopDetection();
         }
-        // ===================== FUNGSI KONTROL =====================
-        const controls = {
-            startDetection: () => {
-                appState.isDetecting = true;
-                UI.startBtn.textContent = "Hentikan Deteksi";
-                UI.overlay.textContent = "Status: Sedang mendeteksi...";
-                utils.addLog("Memulai deteksi botol");
-                model.predict();
-            },
-            
-            stopDetection: () => {
+    }
+};
 
-    appState.isDetecting = false;
-    UI.startBtn.textContent = "Mulai Deteksi";
-    UI.overlay.textContent = "Status: Deteksi dihentikan";
-    utils.addLog("Deteksi dihentikan oleh pengguna");
+// ===================== FUNGSI KONTROL =====================
+const controls = {
+    startDetection: () => {
+        if (!appState.model) {
+            utils.addLog('Model belum dimuat, klik Mulai setelah model siap');
+            return;
+        }
+        appState.isDetecting = true;
+        UI.startBtn.textContent = "Hentikan Deteksi";
+        UI.overlay.textContent = "Status: Sedang mendeteksi...";
+        utils.addLog("Memulai deteksi");
+        model.predict();
+    },
 
-    // Kirim hasil hitungan ke server
-    fetch("save_transaksi.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `total_bottle=${appState.totalBottles}&total_lakban=${appState.totalKaleng}`
-})
-.then(res => res.text())
-.then(data => {
-    if (data === "OK") {
-        utils.addLog("Transaksi tersimpan ke database");
-    } else if (data === "NO_DATA") {
-        utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
+    stopDetection: () => {
+        appState.isDetecting = false;
+        UI.startBtn.textContent = "Mulai Deteksi";
+        UI.overlay.textContent = "Status: Deteksi dihentikan";
+        utils.addLog("Deteksi dihentikan oleh pengguna");
+
+        // Kirim hasil hitungan ke server
+        fetch("save_transaksi.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `total_bottle=${appState.totalBottles}&total_kaleng=${appState.totalKaleng}`
+        })
+        .then(res => res.text())
+        .then(data => {
+            if (data === "OK") {
+                utils.addLog("Transaksi tersimpan ke database");
+            } else if (data === "NO_DATA") {
+                utils.addLog("Tidak ada setoran, transaksi tidak disimpan");
+            } else {
+                utils.addLog("Gagal menyimpan transaksi: " + data);
+            }
+        }).catch(err => {
+            utils.addLog('Gagal menyimpan transaksi: ' + err);
+        });
+    },
+
+    resetCounter: () => {
+        appState.totalBottles = 0;
+        appState.totalKaleng = 0;
+        utils.updateUI();
+        utils.addLog("Hitungan direset ke 0");
+    }
+};
+
+// ===================== EVENT LISTENERS =====================
+UI.startBtn.addEventListener('click', () => {
+    if (appState.isDetecting) {
+        controls.stopDetection();
     } else {
-        utils.addLog("Gagal menyimpan transaksi: " + data);
+        controls.startDetection();
     }
 });
-            },
 
-            
-            resetCounter: () => {
-                appState.totalBottles = 0;
-                utils.updateUI();
-                utils.addLog("Hitungan botol direset ke 0");
-            }
-        };
+UI.resetBtn.addEventListener('click', controls.resetCounter);
 
-        // ===================== EVENT LISTENERS =====================
-        UI.startBtn.addEventListener('click', () => {
-            if (appState.isDetecting) {
-                controls.stopDetection();
-            } else {
-                controls.startDetection();
-            }
-        });
-        
-        UI.resetBtn.addEventListener('click', controls.resetCounter);
+// ===================== INISIALISASI APLIKASI =====================
+const initApp = async () => {
+    UI.startBtn.disabled = true;
+    UI.resetBtn.disabled = false;
 
-        // ===================== INISIALISASI APLIKASI =====================
-        const initApp = async () => {
-            UI.startBtn.disabled = true;
-            UI.resetBtn.disabled = false;
-            
-            await camera.setup();
-            await model.load();
-            
-            UI.video.play();
-            UI.overlay.textContent = "Status: Kamera siap. Klik 'Mulai Deteksi'";
-        };
+    await camera.setup();
+    await model.load();
 
-        window.onload = initApp;
+    UI.video.play();
+    UI.overlay.textContent = "Status: Kamera siap. Klik 'Mulai Deteksi'";
+};
 
-        
-    </script>
+window.onload = initApp;
+</script>
 </body>
 </html>
