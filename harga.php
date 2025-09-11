@@ -295,13 +295,14 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <script>
 // ===================== KONFIGURASI =====================
 const CONFIG = {
-    modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
+    modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
     detectionThreshold: 0.8,    // Minimal confidence 80%
-    detectionInterval: 4000,    // Interval minimal deteksi (4 detik)
+    detectionInterval: 500,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
     classIndexBottle: 0,        // indeks kelas Botol
     classIndexKaleng: 1,
-    wemosBase: 'http://172.17.91.201' // <-- GANTI ke IP Wemos Anda
+    wemosBase: 'http://172.17.91.209' // <-- GANTI ke IP Wemos Anda
 };
 
 // ===================== VARIABEL APLIKASI =====================
@@ -314,7 +315,7 @@ let appState = {
     lastDetectionTimeBottle: 0,
     lastDetectionTimeKaleng: 0,
     lastDetectionTimeKosong: 0,
-    stableFramesNeeded: 9, // butuh N frame berturut-turut untuk valid
+    stableFramesNeeded: 4, // butuh N frame berturut-turut untuk valid
     stableBottle: 0,
     stableKaleng: 0,
     stableKosong: 0
@@ -448,7 +449,6 @@ async function moveLeft() {
 
 async function servoSleep() {
     console.log("Servo → Diam (Tengah)");
-    
     await wemos.servo(90);
 }
 
@@ -490,10 +490,8 @@ const model = {
     },
 
     predict: async () => {
-// pakai setTimeout biar tidak terlalu sering
-if (appState.isDetecting) {
-    setTimeout(() => model.predict(), 1000); // cek tiap 0.5 detik
-}        if (!appState.model) {
+        if (!appState.isDetecting) return;
+        if (!appState.model) {
             utils.addLog('Model belum dimuat');
             return;
         }
@@ -527,7 +525,7 @@ if (appState.isDetecting) {
 
             // ===================== STABLE FRAME (jeda beberapa frame) =====================
             // Reset behavior: hanya satu klasifikasi yang naik counter per frame
-            if (bottleConfidence > CONFIG.detectionThreshold) {
+            if (bottleConfidence >= 0.9 && kosongConfidence <= 1.0) {
                 appState.stableBottle++;
                 appState.stableKaleng = 0;
                 appState.stableKosong = 0;
@@ -548,7 +546,7 @@ if (appState.isDetecting) {
                     appState.stableBottle = 0; // reset counter
                 }
             }
-            else if (kalengConfidence > CONFIG.detectionThreshold) {
+            else if (kalengConfidence >= 0.6 && kosongConfidence <= 1.0) {
                 appState.stableKaleng++;
                 appState.stableBottle = 0;
                 appState.stableKosong = 0;
@@ -570,7 +568,7 @@ if (appState.isDetecting) {
                 }
             }
             // jika kosong confidence di antara 60% - 100% -> diam
-            else if (kosongConfidence >= 0.1 && kosongConfidence <= 1.0) {
+            else if (kosongConfidence >= 0.5 && kosongConfidence <= 1.0) {
                 appState.stableKosong++;
                 appState.stableBottle = 0;
                 appState.stableKaleng = 0;
@@ -585,23 +583,35 @@ if (appState.isDetecting) {
                     appState.stableKosong = 0;
                 }
             }
-            else {
-                // tidak jelas -> reset semua counter dan gerakkan servo ke kiri
-                appState.stableBottle = 0;
-                appState.stableKaleng = 0;
-                appState.stableKosong = 0;
+           else {
+    // Tambahkan logika stabil juga
+    appState.stableBottle = 0;
+    appState.stableKaleng = 0;
+    appState.stableKosong = 0;
 
-                utils.addLog("Gambar tidak jelas, servo ke kiri");
-                await moveLeft();
-            }
+    if (!appState.stableUnknown) appState.stableUnknown = 0;
+    appState.stableUnknown++;
+
+    if (
+        appState.stableUnknown >= appState.stableFramesNeeded &&
+        (currentTime - (appState.lastDetectionTimeUnknown || 0)) > CONFIG.detectionInterval
+    ) {
+        appState.lastDetectionTimeUnknown = currentTime;
+        utils.addLog("Gambar tidak jelas, servo ke kiri");
+        await moveLeft();
+        appState.stableUnknown = 0; // reset counter
+    }
+}
+
 
             // Cleanup tensor
             tf.dispose([img, resized, tensor, normalized]);
 
             // schedule next predict (jika masih mendeteksi)
-            if (appState.isDetecting) {
-                requestAnimationFrame(() => model.predict());
-            }
+           if (appState.isDetecting) {
+    setTimeout(() => model.predict(), 400); // jalankan prediksi tiap 4 detik
+}
+
 
         } catch (error) {
             utils.addLog(`Error saat prediksi: ${error.message}`);
