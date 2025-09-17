@@ -18,6 +18,12 @@ $query_saldo = mysqli_query($conn, "SELECT total_saldo FROM saldo WHERE user_id=
 $data_saldo = mysqli_fetch_assoc($query_saldo);
 $saldo = $data_saldo['total_saldo'] ?? 0;
 
+$result = $conn->query("SELECT setting_value FROM settings WHERE setting_key='wemos_ip' LIMIT 1");
+$row = $result->fetch_assoc();
+
+// echo json_encode([
+//     "wemosBase" => $row['setting_value']
+// ]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -175,15 +181,36 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
             border-radius: 5px;
             font-size: 14px;
         }
+  .nota-container {
+    width: 100%;
+    margin: 20px auto;
+    background: #f8f8ff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .nota-container h3 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+  .nota-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+  }
+  .nota-table th, .nota-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  .nota-table th {
+    background: #e6e6fa;
+  }
+  .nota-total {
+    text-align: right;
+    font-size: 1.1em;
+  }
 
-        #count-display-bottle, #count-display-kaleng {
-            font-size: 18px;
-            font-weight: bold;
-            margin: 15px 0;
-            padding: 5px;
-            background-color: #e0e0ff;
-            border-radius: 5px;
-        }
         button {
             background-color: #4CAF50;
             color: white;
@@ -273,16 +300,43 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
                         <video id="video" width="640" height="480" autoplay muted></video>
                         <div id="overlay">Status: Menunggu inisialisasi...</div>
                     </div>
-                    <div class="d-flex justify-content-around mt-3">
-                        <div id="count-display-bottle" class="p-2 border rounded text-center me-2 flex-grow-1">Total Botol: 0</div>
-                        <div id="count-display-kaleng" class="p-2 border rounded text-center flex-grow-1">Total Kaleng: 0</div>
-                    </div>
+                    <div class="nota-container">
+  <h3>Nota Transaksi</h3>
+  <table class="nota-table">
+    <thead>
+      <tr>
+        <th>Nama</th>
+        <th>Harga Satuan</th>
+        <th>Jumlah</th>
+        <th>Total Harga</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Botol</td>
+        <td>200</td>
+        <td id="jumlah-botol">0</td>
+        <td id="total-botol">0</td>
+      </tr>
+      <tr>
+        <td>Kaleng</td>
+        <td>500</td>
+        <td id="jumlah-kaleng">0</td>
+        <td id="total-kaleng">0</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="nota-total">
+    <strong>Grand Total: Rp<span id="grand-total">0</span></strong>
+  </div>
+</div>
+
                     <div class="d-flex justify-content-center mt-3">
                         <button id="startBtn" class="btn btn-primary me-2">Mulai Menghitung</button>
-                        <button id="resetBtn" class="btn btn-warning">Reset Hitungan</button>
+                        <button id="resetBtn" class="btn btn-warning" style="display: none;">Reset Hitungan</button>
                     </div>
-                    <h6 class="mt-4">Log Deteksi</h6>
-                    <div id="log" class="border rounded p-2 bg-light">
+                    <!-- <h6 class="mt-4">Log Deteksi</h6> -->
+                    <div id="log" class="border rounded p-2 bg-light" style="display: none;">
                         <p>Log deteksi akan muncul di sini...</p>
                     </div>
                 </div>
@@ -296,17 +350,20 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 // ===================== KONFIGURASI =====================
 const CONFIG = {
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-    modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
+    modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
     detectionThreshold: 0.8,    // Minimal confidence 80%
     detectionInterval: 500,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
     classIndexBottle: 0,        // indeks kelas Botol
     classIndexKaleng: 1,
-    wemosBase: 'http://172.17.91.209' // <-- GANTI ke IP Wemos Anda
+    wemosBase: 'http://172.17.91.233' // <-- GANTI ke IP Wemos Anda
 };
 
 // ===================== VARIABEL APLIKASI =====================
 let appState = {
+    // untuk deteksi
     model: null,
     video: null,
     isDetecting: false,
@@ -318,15 +375,23 @@ let appState = {
     stableFramesNeeded: 4, // butuh N frame berturut-turut untuk valid
     stableBottle: 0,
     stableKaleng: 0,
-    stableKosong: 0
+    stableKosong: 0,
+
+    // untuk perhitungan harga
+    hargaBotol: 200,
+    hargaKaleng: 500
 };
 
 // ===================== INISIALISASI ELEMEN UI =====================
 const UI = {
     startBtn: document.getElementById('startBtn'),
     resetBtn: document.getElementById('resetBtn'),
-    countDisplayBottle: document.getElementById('count-display-bottle'),
-    countDisplayKaleng: document.getElementById('count-display-kaleng'),
+    // Sesuai ID baru di tabel nota
+    jumlahBotol: document.getElementById('jumlah-botol'),
+    jumlahKaleng: document.getElementById('jumlah-kaleng'),
+    totalBotol: document.getElementById('total-botol'),
+    totalKaleng: document.getElementById('total-kaleng'),
+    grandTotal: document.getElementById('grand-total'),
     overlay: document.getElementById('overlay'),
     logElement: document.getElementById('log'),
     video: document.getElementById('video')
@@ -347,16 +412,21 @@ const utils = {
     },
 
     updateUI: () => {
-        if (UI.countDisplayBottle) {
-            UI.countDisplayBottle.textContent = `Total Botol: ${appState.totalBottles}`;
-        }
-        if (UI.countDisplayKaleng) {
-            UI.countDisplayKaleng.textContent = `Total Kaleng: ${appState.totalKaleng}`;
-        }
+        // Hitung total harga
+        const totalBotolHarga = appState.totalBottles * appState.hargaBotol;
+        const totalKalengHarga = appState.totalKaleng * appState.hargaKaleng;
+        const grandTotalHarga = totalBotolHarga + totalKalengHarga;
+
+        // Update tampilan tabel nota
+        if (UI.jumlahBotol) UI.jumlahBotol.textContent = appState.totalBottles;
+        if (UI.jumlahKaleng) UI.jumlahKaleng.textContent = appState.totalKaleng;
+        if (UI.totalBotol) UI.totalBotol.textContent = totalBotolHarga;
+        if (UI.totalKaleng) UI.totalKaleng.textContent = totalKalengHarga;
+        if (UI.grandTotal) UI.grandTotal.textContent = grandTotalHarga;
     },
 
     updateSaldoServerBottle: () => {
-        const tambahSaldo = 200;
+        const tambahSaldo = appState.hargaBotol;
         fetch("update_saldo.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -382,7 +452,7 @@ const utils = {
     },
 
     updateSaldoServerKaleng: () => {
-        const tambahSaldo = 500;
+        const tambahSaldo = appState.hargaKaleng;
         fetch("update_saldo.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -568,7 +638,7 @@ const model = {
                 }
             }
             // jika kosong confidence di antara 60% - 100% -> diam
-            else if (kosongConfidence >= 0.5 && kosongConfidence <= 1.0) {
+            else if (kosongConfidence >= 0.7 && kosongConfidence <= 1.0) {
                 appState.stableKosong++;
                 appState.stableBottle = 0;
                 appState.stableKaleng = 0;
@@ -693,6 +763,37 @@ const initApp = async () => {
 };
 
 window.onload = initApp;
+</script>
+<script>
+    let jumlahBotol = 0;
+let jumlahKaleng = 0;
+const hargaBotol = 200;
+const hargaKaleng = 500;
+
+function updateNota() {
+  // Hitung total
+  let totalBotol = jumlahBotol * hargaBotol;
+  let totalKaleng = jumlahKaleng * hargaKaleng;
+  let grandTotal = totalBotol + totalKaleng;
+
+  // Update tampilan
+  document.getElementById("jumlah-botol").textContent = jumlahBotol;
+  document.getElementById("total-botol").textContent = totalBotol;
+  document.getElementById("jumlah-kaleng").textContent = jumlahKaleng;
+  document.getElementById("total-kaleng").textContent = totalKaleng;
+  document.getElementById("grand-total").textContent = grandTotal;
+}
+
+// contoh simulasi update
+function addBotol() {
+  jumlahBotol++;
+  updateNota();
+}
+function addKaleng() {
+  jumlahKaleng++;
+  updateNota();
+}
+
 </script>
 </body>
 </html>

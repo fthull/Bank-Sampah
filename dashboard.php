@@ -8,8 +8,8 @@ $active_page = "dashboard";
 
 // Ambil statistik dari database
 $totalNasabah = $conn->query("SELECT COUNT(*) as jml FROM users WHERE role='nasabah'")->fetch_assoc()['jml'];
-$totalSetoran = $conn->query("SELECT IFNULL(SUM(total),0) as jml FROM transaksi WHERE jenis='setor' AND status='selesai'")->fetch_assoc()['jml'];
-$totalPenarikan = $conn->query("SELECT IFNULL(SUM(total),0) as jml FROM transaksi WHERE jenis='tarik' AND status='selesai'")->fetch_assoc()['jml'];
+$totalSetoran = $conn->query("SELECT IFNULL(SUM(jumlah),0) as jml FROM transaksi_2 WHERE jenis='setor' AND status='berhasil'")->fetch_assoc()['jml'];
+$totalPenarikan = $conn->query("SELECT IFNULL(SUM(jumlah),0) as jml FROM transaksi_2 WHERE jenis='tarik' AND status='berhasil'")->fetch_assoc()['jml'];
 $totalSampah = $conn->query("SELECT IFNULL(SUM(berat),0) as jml FROM detail_transaksi")->fetch_assoc()['jml'];
 
 // Data untuk chart (7 transaksi terakhir)

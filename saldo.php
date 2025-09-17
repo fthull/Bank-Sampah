@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $stmt_insert_transaksi = $conn->prepare("INSERT INTO transaksi_2 (user_id, jenis, jumlah, deskripsi) VALUES (?, ?, ?, ?)");
                 
                 $jenis = "tarik";
-                $deskripsi = "Penarikan sebesar Rp " . number_format($jumlah_tarik, 2, ',', '.') . " ke E-wallet: " . $bank_tujuan . ", No. Telp: " . $nomor_rekening;
+                $deskripsi = "Penarikan ke: " . $bank_tujuan . ", No. Telp: " . $nomor_rekening;
 
                 $stmt_insert_transaksi->bind_param("isds", $user_id, $jenis, $jumlah_tarik, $deskripsi);
                 $stmt_insert_transaksi->execute();
