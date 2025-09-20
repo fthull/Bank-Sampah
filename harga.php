@@ -524,9 +524,7 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
     <div class="layout-container">
         <!-- Kamera Container -->
         <div class="camera-container fade-in">
-            <h4 class="camera-title">
-                <i class="fas fa-camera"></i>Posisi Kamera
-            </h4>
+
             <div id="video-container">
                 <video id="video" autoplay muted playsinline></video>
                 <div id="overlay">Status: Menunggu inisialisasi...</div>
@@ -536,14 +534,12 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
                 <button id="startBtn" class="custom-btn btn-primary-custom" disabled>
                     <i class="fas fa-play me-2"></i>Mulai Menghitung
                 </button>
-                <button id="resetBtn" class="custom-btn btn-warning-custom">
+                <button id="resetBtn" class="custom-btn btn-warning-custom" style="display: none;">
                     <i class="fas fa-redo me-2"></i>Reset Hitungan
                 </button>
             </div>
             
-            <div id="log" class="border rounded p-3 bg-light">
-                <p>Log deteksi akan muncul di sini...</p>
-            </div>
+            
         </div>
 
         <!-- Nota Container -->
@@ -696,7 +692,7 @@ const utils = {
             }, 2000);
         })
         .catch(err => {
-            utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error update saldo: ${err}`);
+            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error update saldo: ${err}`);
         });
     },
 
@@ -726,7 +722,7 @@ const utils = {
             }, 2000);
         })
         .catch(err => {
-            utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error update saldo: ${err}`);
+            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error update saldo: ${err}`);
         });
     }
 };
@@ -792,7 +788,7 @@ const camera = {
             });
         } catch (error) {
             UI.overlay.innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i> Status: Gagal mengakses kamera';
-            utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error: Gagal mengakses kamera - ${error.message}`);
+            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error: Gagal mengakses kamera - ${error.message}`);
             console.error(error);
             return null;
         }
@@ -803,16 +799,16 @@ const camera = {
 const model = {
     load: async () => {
         UI.overlay.innerHTML = '<i class="fas fa-spinner fa-spin text-info"></i> Status: Memuat model...';
-        utils.addLog('<i class="fas fa-download text-info"></i> Memulai pemuatan model machine learning');
+        // utils.addLog('<i class="fas fa-download text-info"></i> Memulai pemuatan model machine learning');
         try {
             appState.model = await tf.loadLayersModel(CONFIG.modelUrl);
             UI.overlay.innerHTML = '<i class="fas fa-check-circle text-success"></i> Status: Model siap. Klik "Mulai Menghitung"';
-            utils.addLog('<i class="fas fa-check text-success"></i> Model berhasil dimuat');
+            // utils.addLog('<i class="fas fa-check text-success"></i> Model berhasil dimuat');
             UI.startBtn.disabled = false;
             UI.startBtn.classList.add('pulse');
         } catch (error) {
             UI.overlay.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Status: Gagal memuat model';
-            utils.addLog(`<i class="fas fa-times text-danger"></i> Error: Gagal memuat model - ${error.message}`);
+            // utils.addLog(`<i class="fas fa-times text-danger"></i> Error: Gagal memuat model - ${error.message}`);
             console.error(error);
         }
     },
@@ -820,7 +816,7 @@ const model = {
     predict: async () => {
         if (!appState.isDetecting) return;
         if (!appState.model) {
-            utils.addLog('<i class="fas fa-exclamation-triangle text-warning"></i> Model belum dimuat');
+            // utils.addLog('<i class="fas fa-exclamation-triangle text-warning"></i> Model belum dimuat');
             return;
         }
 
@@ -862,9 +858,9 @@ const model = {
                     appState.totalBottles++;
                     appState.lastDetectionTimeBottle = currentTime;
                     utils.updateUI();
-                    utils.addLog(
-                        `<i class="fas fa-wine-bottle text-primary"></i> <strong>Botol terdeteksi!</strong> Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
-                    );
+                    // utils.addLog(
+                    //     `<i class="fas fa-wine-bottle text-primary"></i> <strong>Botol terdeteksi!</strong> Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
+                    // );
 
                     utils.updateSaldoServerBottle();
                     await moveRight();
@@ -883,9 +879,9 @@ const model = {
                     appState.totalKaleng++;
                     appState.lastDetectionTimeKaleng = currentTime;
                     utils.updateUI();
-                    utils.addLog(
-                        `<i class="fas fa-box text-warning"></i> <strong>Kaleng terdeteksi!</strong> Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
-                    );
+                    // utils.addLog(
+                    //     `<i class="fas fa-box text-warning"></i> <strong>Kaleng terdeteksi!</strong> Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
+                    // );
 
                     utils.updateSaldoServerKaleng();
                     await moveRight();
@@ -903,7 +899,7 @@ const model = {
                     (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
                 ) {
                     appState.lastDetectionTimeKosong = currentTime;
-                    utils.addLog(`<i class="fas fa-circle text-secondary"></i> Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
+                    // utils.addLog(`<i class="fas fa-circle text-secondary"></i> Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
                     await servoSleep();
                     appState.stableKosong = 0;
                 }
@@ -921,7 +917,7 @@ const model = {
                     (currentTime - (appState.lastDetectionTimeUnknown || 0)) > CONFIG.detectionInterval
                 ) {
                     appState.lastDetectionTimeUnknown = currentTime;
-                    utils.addLog('<i class="fas fa-question-circle text-info"></i> Gambar tidak jelas, servo ke kiri');
+                    // utils.addLog('<i class="fas fa-question-circle text-info"></i> Gambar tidak jelas, servo ke kiri');
                     await moveLeft();
                     appState.stableUnknown = 0;
                 }
@@ -934,7 +930,7 @@ const model = {
             }
 
         } catch (error) {
-            utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error saat prediksi: ${error.message}`);
+            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error saat prediksi: ${error.message}`);
             console.error(error);
             controls.stopDetection();
         }
@@ -945,7 +941,7 @@ const model = {
 const controls = {
     startDetection: () => {
         if (!appState.model) {
-            utils.addLog('<i class="fas fa-exclamation-triangle text-warning"></i> Model belum dimuat, tunggu hingga model siap');
+            // utils.addLog('<i class="fas fa-exclamation-triangle text-warning"></i> Model belum dimuat, tunggu hingga model siap');
             return;
         }
         appState.isDetecting = true;
@@ -953,7 +949,7 @@ const controls = {
         UI.startBtn.classList.remove('btn-primary-custom', 'pulse');
         UI.startBtn.classList.add('btn-warning-custom');
         UI.overlay.innerHTML = '<i class="fas fa-eye text-success"></i> Status: Sedang mendeteksi...';
-        utils.addLog('<i class="fas fa-play text-success"></i> <strong>Memulai deteksi</strong>');
+        // utils.addLog('<i class="fas fa-play text-success"></i> <strong>Memulai deteksi</strong>');
         model.predict();
     },
 
@@ -963,7 +959,7 @@ const controls = {
         UI.startBtn.classList.remove('btn-warning-custom');
         UI.startBtn.classList.add('btn-primary-custom');
         UI.overlay.innerHTML = '<i class="fas fa-pause text-warning"></i> Status: Deteksi dihentikan';
-        utils.addLog('<i class="fas fa-stop text-warning"></i> <strong>Deteksi dihentikan oleh pengguna</strong>');
+        // utils.addLog('<i class="fas fa-stop text-warning"></i> <strong>Deteksi dihentikan oleh pengguna</strong>');
 
         // Simpan transaksi ke server
         if (appState.totalBottles > 0 || appState.totalKaleng > 0) {
@@ -975,19 +971,19 @@ const controls = {
             .then(res => res.text())
             .then(data => {
                 if (data === "OK") {
-                    utils.addLog('<i class="fas fa-save text-success"></i> <strong>Transaksi tersimpan ke database</strong>');
+                    // utils.addLog('<i class="fas fa-save text-success"></i> <strong>Transaksi tersimpan ke database</strong>');
                     // Show success animation
                     document.querySelector('.nota-container').classList.add('pulse');
                     setTimeout(() => {
                         document.querySelector('.nota-container').classList.remove('pulse');
                     }, 2000);
                 } else if (data === "NO_DATA") {
-                    utils.addLog('<i class="fas fa-info-circle text-info"></i> Tidak ada setoran, transaksi tidak disimpan');
+                    // utils.addLog('<i class="fas fa-info-circle text-info"></i> Tidak ada setoran, transaksi tidak disimpan');
                 } else {
-                    utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${data}`);
+                    // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${data}`);
                 }
             }).catch(err => {
-                utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${err}`);
+                // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${err}`);
             });
         }
     },
@@ -996,7 +992,7 @@ const controls = {
         appState.totalBottles = 0;
         appState.totalKaleng = 0;
         utils.updateUI();
-        utils.addLog('<i class="fas fa-redo text-info"></i> <strong>Hitungan direset ke 0</strong>');
+        // utils.addLog('<i class="fas fa-redo text-info"></i> <strong>Hitungan direset ke 0</strong>');
         
         // Add reset animation
         document.querySelector('.nota-container').style.transform = 'scale(0.95)';
@@ -1026,7 +1022,7 @@ const initApp = async () => {
     UI.startBtn.disabled = true;
     UI.resetBtn.disabled = false;
 
-    utils.addLog('<i class="fas fa-rocket text-primary"></i> <strong>Inisialisasi aplikasi...</strong>');
+    // utils.addLog('<i class="fas fa-rocket text-primary"></i> <strong>Inisialisasi aplikasi...</strong>');
     
     await camera.setup();
     await model.load();
@@ -1034,7 +1030,7 @@ const initApp = async () => {
     if (UI.video.srcObject) {
         UI.video.play();
         UI.overlay.innerHTML = '<i class="fas fa-check-circle text-success"></i> Status: Kamera siap. Klik "Mulai Menghitung"';
-        utils.addLog('<i class="fas fa-check text-success"></i> <strong>Kamera berhasil diinisialisasi</strong>');
+        // utils.addLog('<i class="fas fa-check text-success"></i> <strong>Kamera berhasil diinisialisasi</strong>');
     }
 };
 
