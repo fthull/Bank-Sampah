@@ -352,13 +352,13 @@ const CONFIG = {
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
-    modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
+    modelUrl: 'https://teachablemachine.withgoogle.com/models/qvcDkI6k6/model.json',
     detectionThreshold: 0.8,    // Minimal confidence 80%
     detectionInterval: 500,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
     classIndexBottle: 0,        // indeks kelas Botol
     classIndexKaleng: 1,
-    wemosBase: 'http://172.17.91.233' // <-- GANTI ke IP Wemos Anda
+    wemosBase: 'http://172.17.91.177' // <-- GANTI ke IP Wemos Anda
 };
 
 // ===================== VARIABEL APLIKASI =====================
@@ -616,7 +616,7 @@ const model = {
                     appState.stableBottle = 0; // reset counter
                 }
             }
-            else if (kalengConfidence >= 0.6 && kosongConfidence <= 1.0) {
+            else if (kalengConfidence >= 0.95 && kosongConfidence <= 1.0) {
                 appState.stableKaleng++;
                 appState.stableBottle = 0;
                 appState.stableKosong = 0;
@@ -638,7 +638,7 @@ const model = {
                 }
             }
             // jika kosong confidence di antara 60% - 100% -> diam
-            else if (kosongConfidence >= 0.7 && kosongConfidence <= 1.0) {
+            else if (kosongConfidence >= 0.85 && kosongConfidence <= 1.0) {
                 appState.stableKosong++;
                 appState.stableBottle = 0;
                 appState.stableKaleng = 0;
