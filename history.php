@@ -31,7 +31,7 @@ if ($saldo_stmt) {
 // Ambil semua transaksi user dari tabel `transaksi_2` menggunakan Prepared Statement.
 // Perintah ini mengambil data berdasarkan 'user_id' dan mengurutkan berdasarkan tanggal terbaru.
 // Tambahkan LIMIT 10 untuk membatasi jumlah transaksi yang ditampilkan.
-$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, metode, status, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, metode, status, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC");
 if ($transaksi_stmt) {
     mysqli_stmt_bind_param($transaksi_stmt, "i", $user_id);
     mysqli_stmt_execute($transaksi_stmt);
@@ -791,11 +791,11 @@ function format_date_full($date_string) {
 
         // Modal functionality
         const transactionModal = document.getElementById('transactionModal');
-        
+
         transactionModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget; // Button that triggered the modal
-            
-            // Extract data from data-* attributes
+            const button = event.relatedTarget;
+
+            // Ambil data dari atribut data-*
             const id = button.getAttribute('data-id');
             const jenis = button.getAttribute('data-jenis');
             const jenisText = button.getAttribute('data-jenis-text');
@@ -804,33 +804,46 @@ function format_date_full($date_string) {
             const metode = button.getAttribute('data-metode');
             const status = button.getAttribute('data-status');
             const tanggal = button.getAttribute('data-tanggal');
-            
-            // Update modal content
-            document.getElementById('modalId').textContent = '#TRX' + String(id).padStart(3, '0');
-            document.getElementById('modalJenis').textContent = jenisText + ' Saldo';
-            document.getElementById('modalDeskripsi').textContent = deskripsi || 'Tidak ada deskripsi';
+
+            // Isi modal
+            document.getElementById('modalId').textContent = "#TRX" + id;
+            document.getElementById('modalJenis').textContent = jenisText + " Saldo";
+            document.getElementById('modalDeskripsi').textContent = deskripsi;
+
+            const jumlahFormatted = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(jumlah);
+
+            document.getElementById('modalJumlah').textContent = 
+                (jenis === 'setor' ? "+" : "-") + jumlahFormatted;
+            document.getElementById('modalJumlah').className = "detail-value amount " + jenis;
+
             document.getElementById('modalMetode').textContent = metode;
             document.getElementById('modalTanggal').textContent = tanggal;
-            
-            // Update amount with proper formatting and sign
-            const modalJumlah = document.getElementById('modalJumlah');
-            const sign = jenis === 'setor' ? '+' : '-';
-            modalJumlah.textContent = sign + 'Rp ' + jumlah.toLocaleString('id-ID');
-            modalJumlah.className = 'detail-value amount ' + jenis;
-            
-            // Update status badge
-            const modalStatus = document.getElementById('modalStatus');
-            modalStatus.textContent = status.charAt(0).toUpperCase() + status.slice(1);
-            modalStatus.className = 'status-badge status-' + status;
-            
-            // Update icon
+
+            // Status badge
+            const statusBadge = document.getElementById('modalStatus');
+            statusBadge.textContent = status;
+            statusBadge.className = "status-badge";
+            if (status.toLowerCase() === 'berhasil') {
+                statusBadge.classList.add("status-berhasil");
+            } else if (status.toLowerCase() === 'pending') {
+                statusBadge.classList.add("status-pending");
+            } else {
+                statusBadge.classList.add("status-gagal");
+            }
+
+            // Icon besar di modal
             const modalIcon = document.getElementById('modalIcon');
             const modalIconSymbol = document.getElementById('modalIconSymbol');
-            modalIcon.className = 'transaction-icon-large ' + jenis;
-            modalIconSymbol.className = jenis === 'setor' ? 'fas fa-plus' : 'fas fa-minus';
+            modalIcon.className = "transaction-icon-large " + jenis;
+            modalIconSymbol.className = (jenis === 'setor') ? "fas fa-plus" : "fas fa-minus";
         });
     });
 </script>
+
 
 </body>
 </html>

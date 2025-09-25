@@ -587,12 +587,14 @@ const CONFIG = {
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
     // modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
     modelUrl: 'https://teachablemachine.withgoogle.com/models/qvcDkI6k6/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
+    //  modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
     detectionThreshold: 0.8,    // Minimal confidence 80%
-    detectionInterval: 500,    // Interval minimal deteksi (4 detik)
+    detectionInterval: 700,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
     classIndexBottle: 0,
     classIndexKaleng: 1,
-    wemosBase: 'http://172.17.91.177' // <-- GANTI ke IP Wemos Anda
+    wemosBase: 'http://172.17.91.33' // <-- GANTI ke IP Wemos Anda
 
 };
 
@@ -606,7 +608,7 @@ let appState = {
     lastDetectionTimeBottle: 0,
     lastDetectionTimeKaleng: 0,
     lastDetectionTimeKosong: 0,
-    stableFramesNeeded: 4,
+    stableFramesNeeded: 2,
     stableBottle: 0,
     stableKaleng: 0,
     stableKosong: 0,
@@ -867,7 +869,7 @@ const model = {
                     appState.stableBottle = 0;
                 }
             }
-            else if (kalengConfidence >= 0.95 && kosongConfidence <= 1.0) {
+            else if (kalengConfidence >= 0.75 && kosongConfidence <= 1.0) {
                 appState.stableKaleng++;
                 appState.stableBottle = 0;
                 appState.stableKosong = 0;
@@ -889,7 +891,7 @@ const model = {
                 }
             }
 
-            else if (kosongConfidence >= 0.7 && kosongConfidence <= 1.0) {
+            else if (kosongConfidence >= 0.85 && kosongConfidence <= 1.0) {
                 appState.stableKosong++;
                 appState.stableBottle = 0;
                 appState.stableKaleng = 0;
@@ -926,7 +928,7 @@ const model = {
             tf.dispose([img, resized, tensor, normalized]);
 
             if (appState.isDetecting) {
-                setTimeout(() => model.predict(), 400);
+                setTimeout(() => model.predict(), 600);
             }
 
         } catch (error) {
