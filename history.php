@@ -32,7 +32,6 @@ if ($saldo_stmt) {
 
 // Perintah ini mengambil data berdasarkan 'user_id' dan mengurutkan berdasarkan tanggal terbaru.
 // Tambahkan LIMIT 10 untuk membatasi jumlah transaksi yang ditampilkan.
-=
 $transaksi_stmt = mysqli_prepare($conn, "SELECT id, jenis, deskripsi, jumlah, metode, status, created_at FROM transaksi_2 WHERE user_id = ? ORDER BY created_at DESC");
 
 if ($transaksi_stmt) {
@@ -121,10 +120,15 @@ function format_date_full($date_string) {
         }
 
         /* Desktop Navbar */
+        /* Desktop Navbar */
         .desktop-navbar {
             background: var(--gradient-main);
-            box-shadow: 0 2px 10px var(--shadow-medium);
-            z-index: 1000; /* Ensure it stays on top of other content */
+            box-shadow: 0 4px 20px var(--shadow-medium);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
         }
         .desktop-navbar .navbar-brand {
             font-weight: 800;
@@ -138,29 +142,22 @@ function format_date_full($date_string) {
         .desktop-navbar .nav-link {
             color: rgba(255, 255, 255, 0.9) !important;
             font-weight: 500;
-            transition: color 0.3s, transform 0.3s;
+            transition: all 0.3s ease;
             position: relative;
+            padding: 8px 16px !important;
+            border-radius: 25px;
+            margin: 0 4px;
         }
         .desktop-navbar .nav-link:hover,
         .desktop-navbar .nav-link.active {
-            color: var(--accent-yellow) !important;
+            color: var(--text-dark) !important;
+            background: var(--accent-yellow);
             transform: translateY(-2px);
         }
-        .desktop-navbar .nav-link.active::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            bottom: -5px;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 3px;
-            background-color: var(--accent-yellow);
-            border-radius: 2px;
-        }
-
+        
         /* Mobile Navbar */
         .mobile-bottom-nav {
-            display: none; /* Hidden by default, shown on mobile */
+            display: none;
             justify-content: space-around;
             align-items: center;
             position: fixed;
@@ -168,7 +165,7 @@ function format_date_full($date_string) {
             left: 0;
             right: 0;
             height: 65px;
-            background: var(--primary-green);
+            background: var(--gradient-main);
             color: var(--white);
             z-index: 9999;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -176,35 +173,25 @@ function format_date_full($date_string) {
         }
         .mobile-bottom-nav a {
             color: rgba(255, 255, 255, 0.7);
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
             text-decoration: none;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: color 0.3s ease, transform 0.3s ease;
+            transition: all 0.3s ease;
+            padding: 8px 4px;
         }
-        .mobile-bottom-nav a:hover {
-            color: var(--accent-yellow);
-            transform: translateY(-20px);
-            padding-top: 12px;
-            background: var(--primary-green);
-            border-radius: 50%;
-
-        }
+        .mobile-bottom-nav a:hover,
         .mobile-bottom-nav a.active {
             color: var(--accent-yellow);
-            font-weight: 600;
-            transform: translateY(-20px);
-            padding-top: 12px;
-            background: var(--primary-green);
-            border-radius: 50%;
+            transform: translateY(-3px);
         }
         .mobile-bottom-nav i {
             display: block;
-            font-size: 20px;
-            margin-bottom: 5px;
+            font-size: 18px;
+            margin-bottom: 4px;
         }
 
         /* Bagian Header */
@@ -602,20 +589,20 @@ function format_date_full($date_string) {
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar fixed-top">
+<nav class="navbar navbar-expand-lg navbar-dark desktop-navbar">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">Bank Sampah</a>
+        <a class="navbar-brand" href="#"><i class="fas fa-recycle me-2"></i>Bank Sampah</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto">
                 <?php $current_page = basename($_SERVER['PHP_SELF']); ?>
-                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php">Beranda</a></li>
-                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php">Setor Sampah</a></li>
-                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php">Penarikan</a></li>
-                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php">History</a></li>
-                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php">Akun</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'beranda.php' ? 'active' : ''); ?>" href="beranda.php"><i class="fas fa-home me-1"></i>Beranda</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>" href="harga.php"><i class="fas fa-recycle me-1"></i>Setor Sampah</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>" href="saldo.php"><i class="fas fa-money-bill-wave me-1"></i>Penarikan</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'history.php' ? 'active' : ''); ?>" href="history.php"><i class="fas fa-history me-1"></i>History</a></li>
+                <li class="nav-item"><a class="nav-link <?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php"><i class="fas fa-user me-1"></i>Akun</a></li>
             </ul>
         </div>
     </div>
@@ -627,7 +614,7 @@ function format_date_full($date_string) {
     <a href="harga.php" class="<?php echo ($current_page == 'harga.php' ? 'active' : ''); ?>"><i class="fas fa-recycle"></i><span>Setor</span></a>
     <a href="saldo.php" class="<?php echo ($current_page == 'saldo.php' ? 'active' : ''); ?>"><i class="fas fa-money-bill-wave"></i><span>Tarik</span></a>
     <a href="history.php" class="<?php echo ($current_page == 'history.php' ? 'active' : ''); ?>"><i class="fas fa-history"></i><span>History</span></a>
-    <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>" href="profile.php"><i class="fas fa-user"></i><span>Akun</span></a>
+    <a href="profile.php" class="<?php echo ($current_page == 'profile.php' ? 'active' : ''); ?>"><i class="fas fa-user"></i><span>Akun</span></a>
 </div>
 
 <div class="header">
