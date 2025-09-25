@@ -22,6 +22,9 @@ if (isset($_POST['tambah_admin'])) {
     header("Location: admin.php");
     exit();
 }
+echo json_encode([
+    "wemosBase" => $row['setting_value']
+]);
 
 // Proses hapus
 if (isset($_GET['hapus'])) {
@@ -29,6 +32,16 @@ if (isset($_GET['hapus'])) {
     $conn->query("DELETE FROM users WHERE id=$id");
     header("Location: admin.php");
     exit();
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $new_ip = $_POST['wemos_ip'];
+
+    $stmt = $conn->prepare("UPDATE settings SET setting_value=? WHERE setting_key='wemos_ip'");
+    $stmt->bind_param("s", $new_ip);
+    $stmt->execute();
+
+    echo "IP Wemos berhasil diupdate ke: " . htmlspecialchars($new_ip);
 }
 ?>
 <!DOCTYPE html>
@@ -95,6 +108,12 @@ if (isset($_GET['hapus'])) {
   <!-- Content -->
   <div class="content p-4 w-100">
     <h2 class="mb-3"><i class="fas fa-user-cog"></i> Kelola Admin</h2>
+
+    <form method="POST">
+    <label>IP Wemos:</label>
+    <input type="text" name="wemos_ip" value="http://" required>
+    <button type="submit">Simpan</button>
+</form>
 
     <!-- Form Tambah Admin -->
     <div class="card mb-4">
