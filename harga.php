@@ -585,13 +585,8 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <script>
 // ===================== KONFIGURASI =====================
 const CONFIG = {
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
-
     modelUrl: './model3/model.json',
-    metadataUrl: './model3/metadata.json',    // modelUrl: 'https://teachablemachine.withgoogle.com/models/qvcDkI6k6/model.json',
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
-    //  modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
+    metadataUrl: './model3/metadata.json',    
     detectionThreshold: 0.8,    // Minimal confidence 80%
     detectionInterval: 700,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
