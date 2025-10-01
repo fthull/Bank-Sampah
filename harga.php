@@ -585,8 +585,17 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <script>
 // ===================== KONFIGURASI =====================
 const CONFIG = {
+<<<<<<< Updated upstream
     modelUrl: './model3/model.json',
     metadataUrl: './model3/metadata.json',    
+=======
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
+    modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/qvcDkI6k6/model.json',
+    // modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
+    //  modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
+>>>>>>> Stashed changes
     detectionThreshold: 0.8,    // Minimal confidence 80%
     detectionInterval: 700,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
@@ -916,9 +925,125 @@ appState.model = await tmImage.load(CONFIG.modelUrl, CONFIG.metadataUrl);
             }
         }
 
+<<<<<<< Updated upstream
         // Loop deteksi
         if (appState.isDetecting) {
             setTimeout(() => model.predict(), 600);
+=======
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = UI.video.videoWidth;
+            canvas.height = UI.video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
+
+            const img = tf.browser.fromPixels(canvas);
+            const resized = tf.image.resizeBilinear(img, [224, 224]);
+            const tensor = resized.expandDims(0);
+            const normalized = tensor.div(255.0);
+
+            const predictions = await appState.model.predict(normalized).data();
+            const bottleConfidence = predictions[CONFIG.classIndexBottle] || 0;
+            const kalengConfidence = predictions[CONFIG.classIndexKaleng] || 0;
+            const kosongConfidence = predictions[CONFIG.classIndexKosong] || 0;
+
+            UI.overlay.innerHTML = 
+              `<div class="d-flex justify-content-between">
+                <span><i class="fas fa-wine-bottle text-primary"></i> Botol: ${(bottleConfidence * 100).toFixed(1)}%</span>
+                <span><i class="fas fa-box text-warning"></i> Kaleng: ${(kalengConfidence * 100).toFixed(1)}%</span>
+                <span><i class="fas fa-circle text-secondary"></i> Kosong: ${(kosongConfidence * 100).toFixed(1)}%</span>
+              </div>`;
+
+            const currentTime = Date.now();
+
+            if (bottleConfidence >= 0.8 && kosongConfidence <= 1.0) {
+                appState.stableBottle++;
+                appState.stableKaleng = 0;
+                appState.stableKosong = 0;
+
+                if (
+                    appState.stableBottle >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
+                ) {
+                    appState.totalBottles++;
+                    appState.lastDetectionTimeBottle = currentTime;
+                    utils.updateUI();
+                    // utils.addLog(
+                    //     `<i class="fas fa-wine-bottle text-primary"></i> <strong>Botol terdeteksi!</strong> Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
+                    // );
+
+                    utils.updateSaldoServerBottle();
+                    await moveRight();
+                    appState.stableBottle = 0;
+                }
+            }
+            else if (kalengConfidence >= 0.82 && kosongConfidence <= 1.0) {
+                appState.stableKaleng++;
+                appState.stableBottle = 0;
+                appState.stableKosong = 0;
+
+                if (
+                    appState.stableKaleng >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeKaleng) > CONFIG.detectionInterval
+                ) {
+                    appState.totalKaleng++;
+                    appState.lastDetectionTimeKaleng = currentTime;
+                    utils.updateUI();
+                    // utils.addLog(
+                    //     `<i class="fas fa-box text-warning"></i> <strong>Kaleng terdeteksi!</strong> Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
+                    // );
+
+                    utils.updateSaldoServerKaleng();
+                    await moveRight();
+                    appState.stableKaleng = 0;
+                }
+            }
+
+            else if (kosongConfidence >= 0.85 && kosongConfidence <= 1.0) {
+                appState.stableKosong++;
+                appState.stableBottle = 0;
+                appState.stableKaleng = 0;
+
+                if (
+                    appState.stableKosong >= appState.stableFramesNeeded &&
+                    (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
+                ) {
+                    appState.lastDetectionTimeKosong = currentTime;
+                    // utils.addLog(`<i class="fas fa-circle text-secondary"></i> Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
+                    await servoSleep();
+                    appState.stableKosong = 0;
+                }
+            }
+            else {
+                appState.stableBottle = 0;
+                appState.stableKaleng = 0;
+                appState.stableKosong = 0;
+
+                if (!appState.stableUnknown) appState.stableUnknown = 0;
+                appState.stableUnknown++;
+
+                if (
+                    appState.stableUnknown >= appState.stableFramesNeeded &&
+                    (currentTime - (appState.lastDetectionTimeUnknown || 0)) > CONFIG.detectionInterval
+                ) {
+                    appState.lastDetectionTimeUnknown = currentTime;
+                    // utils.addLog('<i class="fas fa-question-circle text-info"></i> Gambar tidak jelas, servo ke kiri');
+                    await moveLeft();
+                    appState.stableUnknown = 0;
+                }
+            }
+
+            tf.dispose([img, resized, tensor, normalized]);
+
+            if (appState.isDetecting) {
+                setTimeout(() => model.predict(), 600);
+            }
+
+        } catch (error) {
+            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error saat prediksi: ${error.message}`);
+            console.error(error);
+            controls.stopDetection();
+>>>>>>> Stashed changes
         }
 
     } catch (error) {
