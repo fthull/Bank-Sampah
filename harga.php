@@ -585,23 +585,14 @@ $saldo = $data_saldo['total_saldo'] ?? 0;
 <script>
 // ===================== KONFIGURASI =====================
 const CONFIG = {
-<<<<<<< Updated upstream
     modelUrl: './model3/model.json',
     metadataUrl: './model3/metadata.json',    
-=======
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/aZOI9yE9A/model.json',
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/W7rqkR7Lb/model.json',
-    modelUrl: 'https://teachablemachine.withgoogle.com/models/g1ZyqsfqU/model.json',
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/qvcDkI6k6/model.json',
-    // modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
-    //  modelUrl: 'https://teachablemachine.withgoogle.com/models/T0j-Kommf/model.json',
->>>>>>> Stashed changes
     detectionThreshold: 0.8,    // Minimal confidence 80%
     detectionInterval: 700,    // Interval minimal deteksi (4 detik)
     classIndexKosong: 2,
     classIndexBottle: 0,
     classIndexKaleng: 1,
-    wemosBase: 'http://172.17.91.23' // <-- GANTI ke IP Wemos Anda
+    wemosBase: 'http://10.10.69.71' // <-- GANTI ke IP Wemos Anda
 
 };
 
@@ -805,161 +796,60 @@ const camera = {
 };
 
 // ===================== FUNGSI MODEL =====================
+
 const model = {
     load: async () => {
         UI.overlay.innerHTML = '<i class="fas fa-spinner fa-spin text-info"></i> Status: Memuat model...';
-        // utils.addLog('<i class="fas fa-download text-info"></i> Memulai pemuatan model machine learning');
         try {
-appState.model = await tmImage.load(CONFIG.modelUrl, CONFIG.metadataUrl);
+            appState.model = await tmImage.load(CONFIG.modelUrl, CONFIG.metadataUrl);
             UI.overlay.innerHTML = '<i class="fas fa-check-circle text-success"></i> Status: Model siap. Klik "Mulai Menghitung"';
-            // utils.addLog('<i class="fas fa-check text-success"></i> Model berhasil dimuat');
             UI.startBtn.disabled = false;
             UI.startBtn.classList.add('pulse');
         } catch (error) {
             UI.overlay.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Status: Gagal memuat model';
-            // utils.addLog(`<i class="fas fa-times text-danger"></i> Error: Gagal memuat model - ${error.message}`);
             console.error(error);
         }
     },
 
-  predict: async () => {
-    if (!appState.isDetecting) return;
-    if (!appState.model) return;
+    predict: async () => {
+        if (!appState.isDetecting || !appState.model) return;
 
-    try {
-        // Ambil frame dari video
-        const canvas = document.createElement('canvas');
-        canvas.width = UI.video.videoWidth;
-        canvas.height = UI.video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
-
-        // Prediksi pakai tmImage
-        const predictions = await appState.model.predict(canvas);
-
-        // Debug log semua class
-        predictions.forEach(p => {
-            console.log(`${p.className}: ${(p.probability * 100).toFixed(2)}%`);
-        });
-
-        // Ambil confidence sesuai index di CONFIG
-        const bottleConfidence = predictions[CONFIG.classIndexBottle].probability;
-        const kalengConfidence = predictions[CONFIG.classIndexKaleng].probability;
-        const kosongConfidence = predictions[CONFIG.classIndexKosong].probability;
-
-        // Update overlay
-        UI.overlay.innerHTML = 
-          `<div class="d-flex justify-content-between">
-            <span><i class="fas fa-wine-bottle text-primary"></i> Botol: ${(bottleConfidence * 100).toFixed(1)}%</span>
-            <span><i class="fas fa-box text-warning"></i> Kaleng: ${(kalengConfidence * 100).toFixed(1)}%</span>
-            <span><i class="fas fa-circle text-secondary"></i> Kosong: ${(kosongConfidence * 100).toFixed(1)}%</span>
-          </div>`;
-
-        // ====== LOGIKA DETEKSI ======
-        const currentTime = Date.now();
-
-        if (bottleConfidence >= CONFIG.detectionThreshold) {
-            appState.stableBottle++;
-            appState.stableKaleng = 0;
-            appState.stableKosong = 0;
-
-            if (
-                appState.stableBottle >= appState.stableFramesNeeded &&
-                (currentTime - appState.lastDetectionTimeBottle) > CONFIG.detectionInterval
-            ) {
-                appState.totalBottles++;
-                appState.lastDetectionTimeBottle = currentTime;
-                utils.updateUI();
-                utils.updateSaldoServerBottle();
-                await moveRight();
-                appState.stableBottle = 0;
-            }
-        }
-        else if (kalengConfidence >= CONFIG.detectionThreshold) {
-            appState.stableKaleng++;
-            appState.stableBottle = 0;
-            appState.stableKosong = 0;
-
-            if (
-                appState.stableKaleng >= appState.stableFramesNeeded &&
-                (currentTime - appState.lastDetectionTimeKaleng) > CONFIG.detectionInterval
-            ) {
-                appState.totalKaleng++;
-                appState.lastDetectionTimeKaleng = currentTime;
-                utils.updateUI();
-                utils.updateSaldoServerKaleng();
-                await moveRight();
-                appState.stableKaleng = 0;
-            }
-        }
-        else if (kosongConfidence >= CONFIG.detectionThreshold) {
-            appState.stableKosong++;
-            appState.stableBottle = 0;
-            appState.stableKaleng = 0;
-
-            if (
-                appState.stableKosong >= appState.stableFramesNeeded &&
-                (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
-            ) {
-                appState.lastDetectionTimeKosong = currentTime;
-                await servoSleep();
-                appState.stableKosong = 0;
-            }
-        }
-        else {
-            // Unknown
-            appState.stableBottle = 0;
-            appState.stableKaleng = 0;
-            appState.stableKosong = 0;
-
-            if (!appState.stableUnknown) appState.stableUnknown = 0;
-            appState.stableUnknown++;
-
-            if (
-                appState.stableUnknown >= appState.stableFramesNeeded &&
-                (currentTime - (appState.lastDetectionTimeUnknown || 0)) > CONFIG.detectionInterval
-            ) {
-                appState.lastDetectionTimeUnknown = currentTime;
-                await moveLeft();
-                appState.stableUnknown = 0;
-            }
-        }
-
-<<<<<<< Updated upstream
-        // Loop deteksi
-        if (appState.isDetecting) {
-            setTimeout(() => model.predict(), 600);
-=======
         try {
+            // Ambil frame dari video
             const canvas = document.createElement('canvas');
             canvas.width = UI.video.videoWidth;
             canvas.height = UI.video.videoHeight;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(UI.video, 0, 0, canvas.width, canvas.height);
 
-            const img = tf.browser.fromPixels(canvas);
-            const resized = tf.image.resizeBilinear(img, [224, 224]);
-            const tensor = resized.expandDims(0);
-            const normalized = tensor.div(255.0);
+            // Prediksi dari model
+            const predictions = await appState.model.predict(canvas);
 
-            const predictions = await appState.model.predict(normalized).data();
-            const bottleConfidence = predictions[CONFIG.classIndexBottle] || 0;
-            const kalengConfidence = predictions[CONFIG.classIndexKaleng] || 0;
-            const kosongConfidence = predictions[CONFIG.classIndexKosong] || 0;
+            // Debug log
+            predictions.forEach(p => {
+                console.log(`${p.className}: ${(p.probability * 100).toFixed(2)}%`);
+            });
 
-            UI.overlay.innerHTML = 
-              `<div class="d-flex justify-content-between">
-                <span><i class="fas fa-wine-bottle text-primary"></i> Botol: ${(bottleConfidence * 100).toFixed(1)}%</span>
-                <span><i class="fas fa-box text-warning"></i> Kaleng: ${(kalengConfidence * 100).toFixed(1)}%</span>
-                <span><i class="fas fa-circle text-secondary"></i> Kosong: ${(kosongConfidence * 100).toFixed(1)}%</span>
-              </div>`;
+            // Ambil confidence tiap kelas
+            const bottleConfidence = predictions[CONFIG.classIndexBottle].probability;
+            const kalengConfidence = predictions[CONFIG.classIndexKaleng].probability;
+            const kosongConfidence = predictions[CONFIG.classIndexKosong].probability;
 
+            // Update UI
+            UI.overlay.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <span><i class="fas fa-wine-bottle text-primary"></i> Botol: ${(bottleConfidence * 100).toFixed(1)}%</span>
+                    <span><i class="fas fa-box text-warning"></i> Kaleng: ${(kalengConfidence * 100).toFixed(1)}%</span>
+                    <span><i class="fas fa-circle text-secondary"></i> Kosong: ${(kosongConfidence * 100).toFixed(1)}%</span>
+                </div>
+            `;
+
+            // Logika deteksi
             const currentTime = Date.now();
 
             if (bottleConfidence >= 0.8 && kosongConfidence <= 1.0) {
                 appState.stableBottle++;
-                appState.stableKaleng = 0;
-                appState.stableKosong = 0;
+                appState.stableKaleng = appState.stableKosong = 0;
 
                 if (
                     appState.stableBottle >= appState.stableFramesNeeded &&
@@ -968,19 +858,14 @@ appState.model = await tmImage.load(CONFIG.modelUrl, CONFIG.metadataUrl);
                     appState.totalBottles++;
                     appState.lastDetectionTimeBottle = currentTime;
                     utils.updateUI();
-                    // utils.addLog(
-                    //     `<i class="fas fa-wine-bottle text-primary"></i> <strong>Botol terdeteksi!</strong> Total: ${appState.totalBottles} (${(bottleConfidence * 100).toFixed(1)}%)`
-                    // );
-
                     utils.updateSaldoServerBottle();
                     await moveRight();
                     appState.stableBottle = 0;
                 }
             }
-            else if (kalengConfidence >= 0.82 && kosongConfidence <= 1.0) {
+            else if (kalengConfidence >= 0.95 && kosongConfidence <= 1.0) {
                 appState.stableKaleng++;
-                appState.stableBottle = 0;
-                appState.stableKosong = 0;
+                appState.stableBottle = appState.stableKosong = 0;
 
                 if (
                     appState.stableKaleng >= appState.stableFramesNeeded &&
@@ -989,83 +874,60 @@ appState.model = await tmImage.load(CONFIG.modelUrl, CONFIG.metadataUrl);
                     appState.totalKaleng++;
                     appState.lastDetectionTimeKaleng = currentTime;
                     utils.updateUI();
-                    // utils.addLog(
-                    //     `<i class="fas fa-box text-warning"></i> <strong>Kaleng terdeteksi!</strong> Total: ${appState.totalKaleng} (${(kalengConfidence * 100).toFixed(1)}%)`
-                    // );
-
                     utils.updateSaldoServerKaleng();
                     await moveRight();
                     appState.stableKaleng = 0;
                 }
             }
-
-            else if (kosongConfidence >= 0.85 && kosongConfidence <= 1.0) {
+            else if (kosongConfidence >= 0.9 && kosongConfidence <= 1.0) {
                 appState.stableKosong++;
-                appState.stableBottle = 0;
-                appState.stableKaleng = 0;
+                appState.stableBottle = appState.stableKaleng = 0;
 
                 if (
                     appState.stableKosong >= appState.stableFramesNeeded &&
                     (currentTime - appState.lastDetectionTimeKosong) > CONFIG.detectionInterval
                 ) {
                     appState.lastDetectionTimeKosong = currentTime;
-                    // utils.addLog(`<i class="fas fa-circle text-secondary"></i> Kosong terdeteksi (${(kosongConfidence * 100).toFixed(1)}%)`);
                     await servoSleep();
                     appState.stableKosong = 0;
                 }
             }
             else {
-                appState.stableBottle = 0;
-                appState.stableKaleng = 0;
-                appState.stableKosong = 0;
-
-                if (!appState.stableUnknown) appState.stableUnknown = 0;
-                appState.stableUnknown++;
+                // Tidak dikenal
+                appState.stableBottle = appState.stableKaleng = appState.stableKosong = 0;
+                appState.stableUnknown = (appState.stableUnknown || 0) + 1;
 
                 if (
                     appState.stableUnknown >= appState.stableFramesNeeded &&
                     (currentTime - (appState.lastDetectionTimeUnknown || 0)) > CONFIG.detectionInterval
                 ) {
                     appState.lastDetectionTimeUnknown = currentTime;
-                    // utils.addLog('<i class="fas fa-question-circle text-info"></i> Gambar tidak jelas, servo ke kiri');
                     await moveLeft();
                     appState.stableUnknown = 0;
                 }
             }
 
-            tf.dispose([img, resized, tensor, normalized]);
-
+            // Ulangi deteksi
             if (appState.isDetecting) {
                 setTimeout(() => model.predict(), 600);
             }
 
         } catch (error) {
-            // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Error saat prediksi: ${error.message}`);
-            console.error(error);
+            console.error("Error saat prediksi:", error);
             controls.stopDetection();
->>>>>>> Stashed changes
         }
-
-    } catch (error) {
-        console.error("Error saat prediksi:", error);
-        controls.stopDetection();
     }
-}
-}
+};
 
 // ===================== FUNGSI KONTROL =====================
 const controls = {
     startDetection: () => {
-        if (!appState.model) {
-            // utils.addLog('<i class="fas fa-exclamation-triangle text-warning"></i> Model belum dimuat, tunggu hingga model siap');
-            return;
-        }
+        if (!appState.model) return;
         appState.isDetecting = true;
         UI.startBtn.innerHTML = '<i class="fas fa-stop me-2"></i>Hentikan Deteksi';
         UI.startBtn.classList.remove('btn-primary-custom', 'pulse');
         UI.startBtn.classList.add('btn-warning-custom');
         UI.overlay.innerHTML = '<i class="fas fa-eye text-success"></i> Status: Sedang mendeteksi...';
-        // utils.addLog('<i class="fas fa-play text-success"></i> <strong>Memulai deteksi</strong>');
         model.predict();
     },
 
@@ -1075,9 +937,8 @@ const controls = {
         UI.startBtn.classList.remove('btn-warning-custom');
         UI.startBtn.classList.add('btn-primary-custom');
         UI.overlay.innerHTML = '<i class="fas fa-pause text-warning"></i> Status: Deteksi dihentikan';
-        // utils.addLog('<i class="fas fa-stop text-warning"></i> <strong>Deteksi dihentikan oleh pengguna</strong>');
 
-        // Simpan transaksi ke server
+        // Simpan transaksi jika ada
         if (appState.totalBottles > 0 || appState.totalKaleng > 0) {
             fetch("save_transaksi.php", {
                 method: "POST",
@@ -1087,20 +948,13 @@ const controls = {
             .then(res => res.text())
             .then(data => {
                 if (data === "OK") {
-                    // utils.addLog('<i class="fas fa-save text-success"></i> <strong>Transaksi tersimpan ke database</strong>');
-                    // Show success animation
                     document.querySelector('.nota-container').classList.add('pulse');
                     setTimeout(() => {
                         document.querySelector('.nota-container').classList.remove('pulse');
                     }, 2000);
-                } else if (data === "NO_DATA") {
-                    // utils.addLog('<i class="fas fa-info-circle text-info"></i> Tidak ada setoran, transaksi tidak disimpan');
-                } else {
-                    // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${data}`);
                 }
-            }).catch(err => {
-                // utils.addLog(`<i class="fas fa-exclamation-triangle text-danger"></i> Gagal menyimpan transaksi: ${err}`);
-            });
+            })
+            .catch(err => console.error("Gagal menyimpan transaksi:", err));
         }
     },
 
@@ -1108,9 +962,6 @@ const controls = {
         appState.totalBottles = 0;
         appState.totalKaleng = 0;
         utils.updateUI();
-        // utils.addLog('<i class="fas fa-redo text-info"></i> <strong>Hitungan direset ke 0</strong>');
-        
-        // Add reset animation
         document.querySelector('.nota-container').style.transform = 'scale(0.95)';
         setTimeout(() => {
             document.querySelector('.nota-container').style.transform = 'scale(1)';
@@ -1118,13 +969,10 @@ const controls = {
     }
 };
 
-// ===================== EVENT LISTENERS =====================
+// ===================== EVENT LISTENER =====================
 UI.startBtn.addEventListener('click', () => {
-    if (appState.isDetecting) {
-        controls.stopDetection();
-    } else {
-        controls.startDetection();
-    }
+    if (appState.isDetecting) controls.stopDetection();
+    else controls.startDetection();
 });
 
 UI.resetBtn.addEventListener('click', () => {
@@ -1133,26 +981,22 @@ UI.resetBtn.addEventListener('click', () => {
     }
 });
 
-// ===================== INISIALISASI APLIKASI =====================
+// ===================== INISIALISASI =====================
 const initApp = async () => {
     UI.startBtn.disabled = true;
     UI.resetBtn.disabled = false;
 
-    // utils.addLog('<i class="fas fa-rocket text-primary"></i> <strong>Inisialisasi aplikasi...</strong>');
-    
     await camera.setup();
     await model.load();
 
     if (UI.video.srcObject) {
         UI.video.play();
         UI.overlay.innerHTML = '<i class="fas fa-check-circle text-success"></i> Status: Kamera siap. Klik "Mulai Menghitung"';
-        // utils.addLog('<i class="fas fa-check text-success"></i> <strong>Kamera berhasil diinisialisasi</strong>');
     }
 };
 
-// Add smooth transitions
+// Animasi
 document.addEventListener('DOMContentLoaded', () => {
-    // Add fade-in animation to elements
     const elements = document.querySelectorAll('.fade-in');
     elements.forEach((el, index) => {
         el.style.animationDelay = `${index * 0.1}s`;
